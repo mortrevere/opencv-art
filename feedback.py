@@ -3,71 +3,58 @@ import cv2 as cv
 from collections import deque 
 import random
 import time
+import acapture
+
+class SummerFilter:
+    def __init__(self, rows, cols, size=3):
+        self.rows = rows
+        self.cols = cols
+        self.size = size
+        self._blank = np.full((self.rows, self.cols, 3), 0, dtype=np.uint8)
+        self.queue = deque([self._blank.copy() for _ in range(self.size)])
+
+    def compute(self, frame):
+        out = self._blank.copy()
+        c = 0
+        self.queue.pop()
+        self.queue.appendleft(frame)
+        for f in self.queue:
+            blur_size = (c%self.size + 1, c%self.size + 1)
+            out += cv.blur(f, blur_size)
+            c += 1
+        return out
+        
+
+class PerformanceWatcher:
+    def __init__(self, buffer_size):
+        self.observations = deque([0 for _ in range(buffer_size)])
+    def observe(self, time):
+        self.observations.pop()
+        self.observations.appendleft(time)
+    def get_time(self):
+        return sum(self.observations)/len(self.observations)
 
 
-cap = cv.VideoCapture(2)
-if not cap.isOpened():
-    print("Cannot open camera")
-    exit()
+cap = acapture.open(0)
+ret, frame = cap.read()
+rows, cols, depth = frame.shape
 
-cap.set(cv.CAP_PROP_FRAME_WIDTH, 800)
-cap.set(cv.CAP_PROP_FRAME_HEIGHT, 600)
+filter = SummerFilter(rows, cols)
+perfs = PerformanceWatcher(10)
 
-i = 0
-alpha = 3.0 # Simple contrast control
-beta = 1    # Simple brightness control
-
-SIZE = 30
-queue = deque([None for _ in range(SIZE)])
-unlock = False
-_blank = None
-_mask = None
-previous = None
 while True:
-    i += 1
+    t1 = time.time()
     ret, frame = cap.read()
-    if not ret:
-        print("Can't receive frame (stream end?). Exiting ...")
-        break
+    rows, cols, depth = frame.shape
 
-    image = frame
-    frame = cv.flip(frame,1)
-    rows, cols, d = frame.shape
-
-    if i == 1:
-        previous = frame
-
-    
-    old = queue.pop()
-    queue.appendleft(frame)
-
-    if _blank is None:
-        _blank = np.full((image.shape[0], image.shape[1]), 0, dtype=np.uint8)
-        _blank = cv.cvtColor(_blank, cv.COLOR_GRAY2BGR)
-    if _mask is None:
-        _mask = np.full((image.shape[0], image.shape[1]), 0, dtype=np.uint8)
-
-
-    total = []
-    if unlock:
-    
-        out = _blank.copy()
-        for f in queue:
-            print(f)
-            out += f
-        #out = frame + previous
-        cv.imshow('frame', out)
-        #previous = out
-        #time.sleep(10)
-
+    cv.imshow('frame', filter.compute(frame))
    
-    if old is not None:   
-        unlock = True
-
-    #time.sleep(3)
-    
     if cv.waitKey(1) == ord('q'):
         break
-# When everything done, release the capture
+
+    perfs.observe(time.time() - t1)
+
+    print(perfs.get_time())
+
 cap.release()
 cv.destroyAllWindows()
