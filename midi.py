@@ -8,9 +8,11 @@ filter_mappings = {
         16: "contrast",
         20: "brightness",
         24: "saturation"
+    },
+    "DragFilter": {
+        16: "amplitude"
     }
 }
-
 
 controls = {
     25: "previous",
@@ -39,10 +41,10 @@ class MidiController():
 
         for button in self.buttons:
             button.on()
-            time.sleep(0.05)
+            time.sleep(0.01)
         for button in self.buttons:
             button.off()
-            time.sleep(0.05)
+            time.sleep(0.01)
 
         self.buttons_by_id = {}
         for button in self.buttons:
@@ -50,15 +52,17 @@ class MidiController():
 
         print("Attaching MIDI input callback handler to", self.port_name)
         print(self.o.current_filter)
-        self.midiin.set_callback(MidiInputHandler(self.port_name, self.buttons_by_id, self.o.current_filter))
+        self.midiin.set_callback(MidiInputHandler(self.port_name, self))
 
 
 class MidiInputHandler():
-    def __init__(self, port, buttons_by_id, filter):
-        self.filter = filter
+    def __init__(self, port, controller):
+        
         self.port = port
         self._wallclock = time.time()
-        self.buttons_by_id = buttons_by_id
+        self.buttons_by_id = controller.buttons_by_id
+        self.o = controller.o
+        self.filter = self.o.current_filter
 
     def normalize(self, value):
         return value/127
@@ -72,15 +76,15 @@ class MidiInputHandler():
 
         if self.buttons_by_id.get(addr) and message[0] == 144:
             self.buttons_by_id[addr].toggle()
+            action = controls.get(addr)
+            if action == "next":
+                self.o.next_filter()
 
-        if filter_mappings.get(self.filter.name):
+        if not filter_mappings.get(self.o.current_filter_name):
             return
-
-        if not filter_mappings.get(self.filter.name):
+        if not filter_mappings[self.o.current_filter_name].get(addr):
             return
-        if not filter_mappings[self.filter.name].get(addr):
-            return
-        self.filter.set_parameter(filter_mappings[self.filter.name][addr], value)
+        self.o.current_filter.set_parameter(filter_mappings[self.o.current_filter_name][addr], value)
         
 
 class ToggleButton():

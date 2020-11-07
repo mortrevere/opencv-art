@@ -5,10 +5,9 @@ from filter import Filter
 
 class BasicFilter(Filter):
     def init(self):
-        self.add_parameter("contrast",min=1,max=3)
-        self.add_parameter("brightness",max=100)
-        self.add_parameter("saturation", max=10)
-        pass
+        self.add_parameter(name="contrast",min=1,max=3)
+        self.add_parameter(name="brightness",max=100)
+        self.add_parameter(name="saturation", max=10)
 
     def compute(self, frame):
         imghsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV).astype("float32")

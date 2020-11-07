@@ -21,7 +21,7 @@ class DragFilter(Filter):
         lfo = self.osc2.next()
         self.osc.freq = lfo*5
         o = self.osc.next()
-        print(self.amplitude)
+        #print(self.amplitude)
         self.M = np.float32([[1,0,self.amplitude],[0,1,self.amplitude]])
 
         acc = cv.addWeighted(self._previous, 0.9, cv.warpAffine(source,self.M,(self.cols,self.rows)), 1, 0.0)

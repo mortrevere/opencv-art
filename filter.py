@@ -37,10 +37,11 @@ class Filter:
     def add_parameter(self, name, default=0, description="", min=0, max=1):
         setattr(self, name, default)
         self.parameters[name] = Parameter(name, self, description, min, max)
+        print(self.parameters)
 
     def set_parameter(self, name, value):
         if not self.parameters.get(name):
             print("Can't find parameter", name) 
             return
-        print(name, value)
+        #print(name, value)
         self.parameters[name].set_value_percent(value)

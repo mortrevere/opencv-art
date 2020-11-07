@@ -2,7 +2,7 @@ import numpy as np
 import cv2 as cv
 import math
 
-class SlitScanFilter:
+class SlitScan2Filter:
     def __init__(self, rows, cols, size=50):
         self.rows = rows
         self.cols = cols

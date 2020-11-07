@@ -61,7 +61,7 @@ class ForegroundFilter:
         direction2 = self.smooth_random("direction2",0,1,1)
         direction3 = self.smooth_random("direction3",0,1,1)
         direction4 = self.smooth_random("direction4",0,1,1)
-        print(speed, direction1, direction2, direction3, direction4)
+        #print(speed, direction1, direction2, direction3, direction4)
         #self.M = np.float32([[1,0,speed],[0,1,speed]])
         #self.M = np.float32([[direction1,1-direction1,speed],[direction3,1-direction3,speed]])
         self.M = np.float32([[direction1,1-direction1,speed],[direction3,1-direction3,speed]])
