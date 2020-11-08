@@ -37,7 +37,8 @@ class MidiController():
         except (EOFError, KeyboardInterrupt):
             print("No midi.")
 
-        self.buttons = [ToggleButton(self.midiout, i) for i in range(27)]
+        self.buttons = [ToggleButton(self.midiout, i) for i in range(25)]
+        self.buttons += [TriggerButton(self.midiout, i) for i in [25,26]]
 
         for button in self.buttons:
             button.on()
@@ -74,11 +75,21 @@ class MidiInputHandler():
         addr = message[1]
         value = self.normalize(message[2])
 
-        if self.buttons_by_id.get(addr) and message[0] == 144:
-            self.buttons_by_id[addr].toggle()
-            action = controls.get(addr)
-            if action == "next":
-                self.o.next_filter()
+        if self.buttons_by_id.get(addr):
+            if message[0] == 144:
+                if isinstance(self.buttons_by_id.get(addr), ToggleButton):
+                    self.buttons_by_id[addr].toggle()
+                if isinstance(self.buttons_by_id.get(addr), TriggerButton):
+                    self.buttons_by_id[addr].on()
+
+                action = controls.get(addr)
+                if action == "next":
+                    self.o.next_filter()
+                if action == "previous":
+                    self.o.prev_filter()
+            if message[0] == 128:
+                if isinstance(self.buttons_by_id.get(addr), TriggerButton):
+                    self.buttons_by_id[addr].off()
 
         if not filter_mappings.get(self.o.current_filter_name):
             return

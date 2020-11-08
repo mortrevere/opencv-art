@@ -29,14 +29,22 @@ class Orchestrator:
     @property
     def f(self):
         return self.current_filter
+    @property
+    def current_filter_index(self):
+        return self.available_filters.index(self.current_filter_name)
 
     def compute(self, frame):
         return self.current_filter.compute(frame)
 
     def next_filter(self):
-        current_i = self.available_filters.index(self.current_filter_name)
-        print(current_i)
-        next_i = (current_i+1)%(len(self.available_filters))
+        next_i = (self.current_filter_index+1)%(len(self.available_filters))
         self.current_filter = self.filters[next_i]
-        print(next_i, self.available_filters, self.filters)
+
+    def prev_filter(self):
+        if self.current_filter_index == 0:
+            next_i = len(self.available_filters) - 1
+        else:
+            next_i = (self.current_filter_index-1)
+        
+        self.current_filter = self.filters[next_i]
     
