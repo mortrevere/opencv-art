@@ -3,7 +3,8 @@ import rtmidi.midiutil
 import rtmidi
 import mido
 
-midi_addr_to_parameter_index = {16: 0, 20: 1, 24: 2}
+global_filter_addr_to_parameter_index = {16: 0, 20: 1, 24: 2}
+midi_addr_to_parameter_index = {}
 
 controls = {25: "previous", 26: "next"}
 
@@ -79,6 +80,11 @@ class MidiInputHandler:
             if message[0] == 128:  # note OFF
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
                     self.buttons_by_id[addr].off()
+
+        if global_filter_addr_to_parameter_index.get(addr, None) is not None:
+            parameter_index = global_filter_addr_to_parameter_index[addr]
+            self.o.global_filter.set_parameter(parameter_index, value)
+            return
 
         if midi_addr_to_parameter_index.get(addr, None) is None:
             return
