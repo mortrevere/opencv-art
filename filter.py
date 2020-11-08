@@ -40,8 +40,15 @@ class Filter:
         print(self.parameters)
 
     def set_parameter(self, name, value):
-        if not self.parameters.get(name):
-            print("Can't find parameter", name) 
-            return
-        #print(name, value)
+        # 'name' supports string or int to id the parameter
+        # id is 0-based and follows the order of parameters declarations
+        if isinstance(name, int):
+            if name > len(self.parameters):
+                print("Can't find parameter at index", name)
+                return
+            name = list(self.parameters.keys())[name]
+        if isinstance(name, str):
+            if not self.parameters.get(name):
+                print("Can't find parameter", name) 
+                return
         self.parameters[name].set_value_percent(value)

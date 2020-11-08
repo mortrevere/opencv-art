@@ -3,15 +3,10 @@ import rtmidi.midiutil
 import rtmidi
 import mido 
 
-filter_mappings = {
-    "BasicFilter": {
-        16: "contrast",
-        20: "brightness",
-        24: "saturation"
-    },
-    "DragFilter": {
-        16: "amplitude"
-    }
+midi_addr_to_parameter_index = {
+    16: 0,
+    20: 1,
+    24: 2
 }
 
 controls = {
@@ -76,7 +71,7 @@ class MidiInputHandler():
         value = self.normalize(message[2])
 
         if self.buttons_by_id.get(addr):
-            if message[0] == 144:
+            if message[0] == 144: #note ON
                 if isinstance(self.buttons_by_id.get(addr), ToggleButton):
                     self.buttons_by_id[addr].toggle()
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
@@ -87,15 +82,14 @@ class MidiInputHandler():
                     self.o.next_filter()
                 if action == "previous":
                     self.o.prev_filter()
-            if message[0] == 128:
+            if message[0] == 128: #note OFF
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
                     self.buttons_by_id[addr].off()
 
-        if not filter_mappings.get(self.o.current_filter_name):
+        if midi_addr_to_parameter_index.get(addr, None) is None:
             return
-        if not filter_mappings[self.o.current_filter_name].get(addr):
-            return
-        self.o.current_filter.set_parameter(filter_mappings[self.o.current_filter_name][addr], value)
+        parameter_index = midi_addr_to_parameter_index[addr]
+        self.o.current_filter.set_parameter(parameter_index, value)
         
 
 class ToggleButton():
