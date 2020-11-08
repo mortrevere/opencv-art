@@ -13,4 +13,7 @@ class PerformanceWatcher:
         return sum(self.observations) / len(self.observations)
 
     def get_fps(self):
-        return 1 / self.get_time()
+        if self.get_time():
+            return 1 / self.get_time()
+        else:
+            return 0

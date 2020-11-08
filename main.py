@@ -20,16 +20,10 @@ def findInput():
 cap, frame = findInput()
 
 rows, cols, depth = frame.shape
-# f = slit_scan_filter.SlitScanFilter(rows, cols)
-# f = allpass.AllPassFilter(rows, cols)
-# f = summer_filter.SummerFilter(rows, cols)
-# f = foreground.ForegroundFilter(rows, cols)
-# f = pixels.DragFilter(rows, cols)
-# f = basic.BasicFilter(rows, cols)
 
 perfs = PerformanceWatcher(10)
 
-o = Orchestrator(rows, cols)
+o = Orchestrator(rows, cols, perfs)
 midi = MidiController(o)
 
 while True:

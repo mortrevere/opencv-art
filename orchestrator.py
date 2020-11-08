@@ -1,14 +1,23 @@
+from ui import UI
 from filters import *
+
 import sys, inspect
 import importlib
+import threading
+import time
+import asyncio
 
 
 class Orchestrator:
-    def __init__(self, rows, cols):
+    def __init__(self, rows, cols, performance_watcher):
         self.rows = rows
         self.cols = cols
+        self.performance_watcher = performance_watcher
+        self.ui = UI(asyncio.get_event_loop())
         self.current_filter = None
         self.global_filter = basic.GlobalFilter(rows, cols)
+
+        self.create_ui_threads()
 
         # dynamically loads filters instances
         available_filters = [
@@ -58,3 +67,17 @@ class Orchestrator:
             next_i = self.current_filter_index - 1
 
         self.current_filter = self.filters[next_i]
+
+    def send_ui_info(self, message):
+        self.ui.send(message)
+
+    def create_ui_threads(self):
+        self.fps_thread = threading.Thread(target=self.send_fps_to_ui)
+        self.fps_thread.start()
+
+    def send_fps_to_ui(self):
+        while True:
+            fps = self.performance_watcher.get_fps()
+            message = f"fps:{fps}"
+            self.send_ui_info(message)
+            time.sleep(2)

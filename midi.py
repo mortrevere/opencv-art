@@ -24,8 +24,9 @@ class MidiController:
         try:
             self.midiin, self.port_name = rtmidi.midiutil.open_midiinput(self.port_id)
             self.midiout, _ = rtmidi.midiutil.open_midioutput(self.port_id)
-        except (EOFError, KeyboardInterrupt):
+        except:
             print("No midi.")
+            return
 
         self.buttons = [ToggleButton(self.midiout, i) for i in range(25)]
         self.buttons += [TriggerButton(self.midiout, i) for i in [25, 26]]
@@ -62,6 +63,7 @@ class MidiInputHandler:
         message, deltatime = event
         self._wallclock += deltatime
         print("[%s] @%0.6f %r" % (self.port, self._wallclock, message))
+        # self.o.send_ui_info("[%s] @%0.6f %r" % (self.port, self._wallclock, message))
         addr = message[1]
         value = self.normalize(message[2])
 
