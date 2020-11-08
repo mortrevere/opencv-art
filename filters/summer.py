@@ -1,6 +1,7 @@
-from collections import deque 
+from collections import deque
 import numpy as np
 import cv2 as cv
+
 
 class SummerFilter:
     def __init__(self, rows, cols, size=3):
@@ -16,7 +17,7 @@ class SummerFilter:
         self.queue.pop()
         self.queue.appendleft(frame)
         for f in self.queue:
-            blur_size = (c%self.size + 1, c%self.size + 1)
+            blur_size = (c % self.size + 1, c % self.size + 1)
             out += cv.blur(f, blur_size)
             c += 1
         return out

@@ -16,8 +16,8 @@ class ControlServer:
         self.canaries = canaries
         self.server_thread = threading.Thread(target=self.server)
         self.server_thread.start()
-        #self.server_thread.join()
-        #print("AdminServer crashed")
+        # self.server_thread.join()
+        # print("AdminServer crashed")
 
     def server(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -29,9 +29,9 @@ class ControlServer:
                 self.conn, self.addr = s.accept()
                 with self.conn:
                     print("[AdminServer] Connection from", self.addr)
-                    #self.reply(HELP_STRING, prompt=False)
-                    #self.reply("List of services : ", prompt=False)
-                    #self.send_list()
+                    # self.reply(HELP_STRING, prompt=False)
+                    # self.reply("List of services : ", prompt=False)
+                    # self.send_list()
                     while True:
                         data = self.conn.recv(1024)
                         if not data:

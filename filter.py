@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import math
 
+
 class Parameter:
     def __init__(self, name, ref, description, min, max):
         self.name = name
@@ -9,15 +10,18 @@ class Parameter:
         self.min = min
         self.max = max
         self.ref = ref
+
     def set_value(self, value):
         if value > self.max:
             value = self.max
         if value < self.min:
             value = self.min
         setattr(self.ref, self.name, value)
+
     def set_value_percent(self, percent):
-        value = percent*(self.max - self.min) + self.min
+        value = percent * (self.max - self.min) + self.min
         self.set_value(value)
+
 
 class Filter:
     def __init__(self, rows, cols):
@@ -47,8 +51,9 @@ class Filter:
                 print("Can't find parameter at index", name)
                 return
             name = list(self.parameters.keys())[name]
+
         if isinstance(name, str):
             if not self.parameters.get(name):
-                print("Can't find parameter", name) 
+                print("Can't find parameter", name)
                 return
         self.parameters[name].set_value_percent(value)
