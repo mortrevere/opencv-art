@@ -80,4 +80,4 @@ class Orchestrator:
             fps = self.performance_watcher.get_fps()
             message = f"fps:{fps}"
             self.send_ui_info(message)
-            time.sleep(2)
+            time.sleep(1)

@@ -21,7 +21,7 @@ cap, frame = findInput()
 
 rows, cols, depth = frame.shape
 
-perfs = PerformanceWatcher(10)
+perfs = PerformanceWatcher(15)
 
 o = Orchestrator(rows, cols, perfs)
 midi = MidiController(o)
@@ -37,9 +37,6 @@ while True:
 
     if cv.waitKey(1) == ord("q"):
         break
-
-    # if random.randint(1,10) > 9:
-    #    f.set_parameter("amplitude", random.randint(1,10)*10)
 
     perfs.observe(time.time() - t1)
 

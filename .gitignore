@@ -1,2 +1,4 @@
 **/__pycache__/
 venv/
+UI/chart.min.js
+wsclient.py
