@@ -25,7 +25,6 @@ perfs = PerformanceWatcher(15)
 
 o = Orchestrator(rows, cols, perfs)
 midi = MidiController(o)
-
 while True:
     t1 = time.time()
     ret, frame = cap.read()
@@ -33,7 +32,12 @@ while True:
 
     frame = cv.flip(frame, 1)
 
-    cv.imshow("frame", o.compute(frame))
+    # cv.imshow("frame", cv.resize(o.compute(frame), (1600, 1200)))
+    try:
+        cv.imshow("frame", cv.resize(o.compute(frame), (800, 600)))
+    except Exception as e:
+        print(str(e))
+        pass
 
     if cv.waitKey(1) == ord("q"):
         break
@@ -41,4 +45,3 @@ while True:
     perfs.observe(time.time() - t1)
 
 cv.destroyAllWindows()
-midiin.close_port()

@@ -4,11 +4,12 @@ import math
 
 
 class Parameter:
-    def __init__(self, name, ref, description, min, max):
+    def __init__(self, name, ref, description, min, max, default):
         self.name = name
         self.description = description
         self.min = min
         self.max = max
+        self.default = default
         self.ref = ref
 
     def set_value(self, value):
@@ -40,10 +41,10 @@ class Filter:
 
     def add_parameter(self, name, default=0, description="", min=0, max=1):
         setattr(self, name, default)
-        self.parameters[name] = Parameter(name, self, description, min, max)
+        self.parameters[name] = Parameter(name, self, description, min, max, default)
         print(self.parameters)
 
-    def set_parameter(self, name, value):
+    def get_parameter(self, name):
         # 'name' supports string or int to id the parameter
         # id is 0-based and follows the order of parameters declarations
         if isinstance(name, int):
@@ -56,4 +57,16 @@ class Filter:
             if not self.parameters.get(name):
                 print("Can't find parameter", name)
                 return
-        self.parameters[name].set_value_percent(value)
+        return self.parameters[name]
+
+    def set_parameter(self, name, value):
+        self.get_parameter(name).set_value_percent(value)
+
+    def reset_parameter(self, name):
+        p = self.get_parameter(name)
+        p.set_value(p.default)
+
+    def reset_all_parameters(self):
+        print("here")
+        for name in self.parameters.keys():
+            self.reset_parameter(name)
