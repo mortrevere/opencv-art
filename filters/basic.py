@@ -10,6 +10,7 @@ class GlobalFilter(Filter):
         self.add_parameter(name="brightness", max=100, default=0)
         self.add_parameter(name="saturation", min=1, max=10, default=1)
         self.add_parameter(name="hue", min=0, max=179, default=0)
+        self.add_parameter(name="sharp", min=0, max=10, default=0)
         self.add_parameter(name="blue", min=0, max=255, default=0)
         self.add_parameter(name="green", min=0, max=255, default=0)
         self.add_parameter(name="red", min=0, max=255, default=0)

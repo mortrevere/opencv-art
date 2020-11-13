@@ -33,7 +33,7 @@ class Filter:
         self._mask = np.full((self.rows, self.cols), 0, dtype=np.uint8)
         self._previous = self._blank.copy()
         self.init()
-        print(f"{self.__class__.__name__} initialized in {self.rows}x{self.cols}")
+        print(f"{self.__class__.__name__} initialized")
 
     @property
     def name(self):
@@ -42,7 +42,6 @@ class Filter:
     def add_parameter(self, name, default=0, description="", min=0, max=1):
         setattr(self, name, default)
         self.parameters[name] = Parameter(name, self, description, min, max, default)
-        print(self.parameters)
 
     def get_parameter(self, name):
         # 'name' supports string or int to id the parameter

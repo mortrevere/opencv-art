@@ -1,12 +1,11 @@
 from collections import deque
 import numpy as np
 import cv2 as cv
+from filter import Filter
 
 
-class SummerFilter:
-    def __init__(self, rows, cols, size=3):
-        self.rows = rows
-        self.cols = cols
+class SummerFilter(Filter):
+    def init(self, size=3):
         self.size = size
         self._blank = np.full((self.rows, self.cols, 3), 0, dtype=np.uint8)
         self.queue = deque([self._blank.copy() for _ in range(self.size)])

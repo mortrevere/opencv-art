@@ -11,6 +11,7 @@ global_filter_addr_to_parameter_index = {
     20: 4,
     21: 5,
     22: 6,
+    23: 7,
 }
 midi_addr_to_parameter_index = {}
 

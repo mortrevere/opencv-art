@@ -2,12 +2,11 @@ import numpy as np
 import cv2 as cv
 import math
 import random
+from filter import Filter
 
 
-class ForegroundFilter:
-    def __init__(self, rows, cols, size=50):
-        self.rows = rows
-        self.cols = cols
+class ForegroundFilter(Filter):
+    def init(self, size=50):
         self.size = size
         self._blank = np.full((self.rows, self.cols, 3), 0, dtype=np.uint8)
         self._mask = np.full((self.rows, self.cols), 0, dtype=np.uint8)
@@ -17,10 +16,6 @@ class ForegroundFilter:
         self.M = np.float32([[1, 0, 5], [0, 1, 5]])
 
         self.current_walk = {}
-
-        print(
-            f"SlitScanFilter initialized in {self.rows}x{self.cols}, {self.size} lines"
-        )
 
     def smooth_random(self, id, min=1, max=5, deviation=5):
         if not self.current_walk.get(id):

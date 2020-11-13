@@ -1,20 +1,16 @@
 import numpy as np
 import cv2 as cv
 import math
+from filter import Filter
 
 
-class SlitScan2Filter:
-    def __init__(self, rows, cols, size=50):
-        self.rows = rows
-        self.cols = cols
+class SlitScan2Filter(Filter):
+    def init(self, size=50):
         self.size = size
         self._blank = np.full((self.rows, self.cols, 3), 0, dtype=np.uint8)
         self._mask = np.full((self.rows, self.cols), 0, dtype=np.uint8)
         self.queue = [self._blank.copy() for _ in range(self.size)]
         self.frame_counter = 0
-        print(
-            f"SlitScanFilter initialized in {self.rows}x{self.cols}, {self.size} lines"
-        )
 
     def compute(self, frame):
         out = self._blank.copy()
