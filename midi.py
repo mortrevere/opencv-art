@@ -13,7 +13,31 @@ global_filter_addr_to_parameter_index = {
     22: 6,
     23: 7,
 }
-midi_addr_to_parameter_index = {}
+
+filter_bind_to_midi_addr = {
+    "knob1": 16,
+    "knob2": 17,
+    "knob3": 18,
+    "knob4": 19,
+    "fader1": 0,
+    "fader2": 1,
+    "fader3": 2,
+    "fader4": 3,
+    "button1s": 32,
+    "button2s": 33,
+    "button3s": 34,
+    "button4s": 35,
+    "button1m": 48,
+    "button2m": 49,
+    "button3m": 50,
+    "button4m": 51,
+    "button1r": 64,
+    "button2r": 65,
+    "button3r": 66,
+    "button4r": 67,
+}
+
+midi_addr_to_filter_bind = {v: k for k, v in filter_bind_to_midi_addr.items()}
 
 controls = {58: "previous", 59: "next", 60: "set"}
 modifiers = {"global_filter": 46}
@@ -28,9 +52,7 @@ for bt in trigger_buttons_list:
 class MidiController:
     def __init__(self, orchestrator):
         self.o = orchestrator
-        midiin = rtmidi.MidiIn(
-            rtmidi.midiutil.get_api_from_environment(rtmidi.API_UNSPECIFIED)
-        )
+        midiin = rtmidi.MidiIn(rtmidi.midiutil.get_api_from_environment(rtmidi.API_UNSPECIFIED))
         ports = midiin.get_ports()
         for i in range(len(ports)):
             if "nanoKONTROL" in ports[i]:
@@ -82,24 +104,28 @@ class MidiInputHandler:
         message, deltatime = event
         self._wallclock += deltatime
         print("[%s] @%0.6f %r" % (self.port, self._wallclock, message))
-        # self.o.send_ui_info("[%s] @%0.6f %r" % (self.port, self._wallclock, message))
         addr = message[1]
         value = self.normalize(message[2])  # 0-127 -> 0-1
 
-        if self.buttons_by_id.get(addr):
-            if value:  # note ON
+        if self.buttons_by_id.get(addr):  # button was pressed
+            if value:  # button ON
                 if isinstance(self.buttons_by_id.get(addr), ToggleButton):
                     self.buttons_by_id[addr].toggle()
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
                     self.buttons_by_id[addr].on()
 
                 action = controls.get(addr)
-                print(addr, action)
                 if action == "next":
                     self.o.next_filter()
                 if action == "previous":
                     self.o.prev_filter()
-            else:  # note OFF
+
+                if midi_addr_to_filter_bind.get(addr):  # button pressed is a filter control
+                    binding = midi_addr_to_filter_bind[addr]
+                    parameter_name = self.o.current_filter.parameters_binding[binding]
+                    self.o.current_filter.set_parameter(parameter_name, self.buttons_by_id[addr].state)
+                    return
+            else:  # button OFF
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
                     self.buttons_by_id[addr].released = True
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
@@ -114,16 +140,13 @@ class MidiInputHandler:
                 return
         else:  # global filter is turned off ...
             # but not yet released ! (and "set" pressed)
-            if (
-                not self.buttons_by_id[modifiers["global_filter"]].released
-                and controls.get(addr) == "set"
-            ):
-                self.o.global_filter.reset_all_parameters()
+            if not self.buttons_by_id[modifiers["global_filter"]].released and controls.get(addr) == "set":
+                self.o.global_filter.reset_all_parameters()  # reset all parameters (cycle + set)
 
-        if midi_addr_to_parameter_index.get(addr, None) is None:
-            return
-        parameter_index = midi_addr_to_parameter_index[addr]
-        self.o.current_filter.set_parameter(parameter_index, value)
+        if midi_addr_to_filter_bind.get(addr) and not self.buttons_by_id.get(addr):  # knob turned is a filter control
+            binding = midi_addr_to_filter_bind[addr]
+            parameter_name = self.o.current_filter.parameters_binding[binding]
+            self.o.current_filter.set_parameter(parameter_name, value)
 
 
 class ToggleButton:

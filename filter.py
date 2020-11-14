@@ -27,6 +27,7 @@ class Parameter:
 class Filter:
     def __init__(self, rows, cols):
         self.parameters = {}
+        self.parameters_binding = {}
         self.rows = rows
         self.cols = cols
         self._blank = np.full((self.rows, self.cols, 3), 0, dtype=np.uint8)
@@ -39,9 +40,11 @@ class Filter:
     def name(self):
         return self.__class__.__name__
 
-    def add_parameter(self, name, default=0, description="", min=0, max=1):
+    def add_parameter(self, name, bind=0, default=0, description="", min=0, max=1):
         setattr(self, name, default)
+        self.parameters_binding[bind] = name
         self.parameters[name] = Parameter(name, self, description, min, max, default)
+        print(self.parameters_binding)
 
     def get_parameter(self, name):
         # 'name' supports string or int to id the parameter
@@ -66,6 +69,5 @@ class Filter:
         p.set_value(p.default)
 
     def reset_all_parameters(self):
-        print("here")
         for name in self.parameters.keys():
             self.reset_parameter(name)

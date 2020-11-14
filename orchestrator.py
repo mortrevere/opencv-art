@@ -20,14 +20,9 @@ class Orchestrator:
         self.create_ui_threads()
 
         # dynamically loads filters instances
-        available_filters = [
-            module for module in sys.modules.keys() if module.startswith("filters.")
-        ]
+        available_filters = [module for module in sys.modules.keys() if module.startswith("filters.")]
         self.filters_module = importlib.import_module("filters")
-        self.filters_module = [
-            getattr(self.filters_module, filter[len("filters.") :])
-            for filter in available_filters
-        ]
+        self.filters_module = [getattr(self.filters_module, filter[len("filters.") :]) for filter in available_filters]
 
         self.filters = []  # holds filters instances
         for f in self.filters_module:
@@ -40,9 +35,7 @@ class Orchestrator:
                     if klass[0] == "AllPassFilter":  # default filter
                         self.current_filter = self.filters[-1]
 
-        self.available_filters = [
-            f.__class__.__name__ for f in self.filters
-        ]  # list of filters by name
+        self.available_filters = [f.__class__.__name__ for f in self.filters]  # list of filters by name
         print(self.available_filters)
 
     @property

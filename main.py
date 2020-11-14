@@ -43,5 +43,5 @@ while True:
         break
 
     perfs.observe(time.time() - t1)
-
+    # print(perfs.get_fps())
 cv.destroyAllWindows()
