@@ -14,7 +14,7 @@ It's controllable using any MIDI controller, but supports natively the [Korg nan
 
 ## Architecture
 
-![architecture](docs/archi.png)
+![architecture](doc/archi.png)
 
 ## Contributing
 
