@@ -16,6 +16,9 @@ It's controllable using any MIDI controller, but supports natively the [Korg nan
 
 ![architecture](doc/archi.png)
 
+The green part is optional, but allows to get feedback about what is going on in the program. It is designed to be used on another device, like a phone or another computer for performances reasons, and also because the main computer in the practical setup is a raspberry pi, without a screen. 
+The web UI that connects to the FX engine is accessible in the `UI/` folder, as a HTML page.
+
 ## Contributing
 
 It is fairly easy to contribute to this project. It includes a set of filters that just waits to be extended. Creating a filter is simple, and doesn't even require having a midi controller.
