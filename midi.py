@@ -2,50 +2,18 @@ import time
 import rtmidi.midiutil
 import rtmidi
 import mido
+from config import config
 
-global_filter_addr_to_parameter_index = {
-    16: 0,
-    17: 1,
-    18: 2,
-    19: 3,
-    20: 4,
-    21: 5,
-    22: 6,
-    23: 7,
-}
-
-filter_bind_to_midi_addr = {
-    "knob1": 16,
-    "knob2": 17,
-    "knob3": 18,
-    "knob4": 19,
-    "fader1": 0,
-    "fader2": 1,
-    "fader3": 2,
-    "fader4": 3,
-    "button1s": 32,
-    "button2s": 33,
-    "button3s": 34,
-    "button4s": 35,
-    "button1m": 48,
-    "button2m": 49,
-    "button3m": 50,
-    "button4m": 51,
-    "button1r": 64,
-    "button2r": 65,
-    "button3r": 66,
-    "button4r": 67,
-}
-
-midi_addr_to_filter_bind = {v: k for k, v in filter_bind_to_midi_addr.items()}
-
-controls = {58: "previous", 59: "next", 60: "set"}
-modifiers = {"global_filter": 46}
+# load config
+global_filter_addr_to_parameter_index = {int(k): int(v) for k, v in dict(config["midi.global_filter_binds"]).items()}
+midi_addr_to_filter_bind = {int(v): k for k, v in dict(config["midi.filter_binds"]).items()}
+controls = {int(k): v for k, v in dict(config["midi.controls"]).items()}
+modifiers = {k: int(v) for k, v in dict(config["midi.modifiers"]).items()}
 toggle_buttons_list = list(range(32, 72))
-trigger_buttons_list = [58, 59]
-
+trigger_buttons_list = [int(value) for value in config.options("midi.trigger_buttons")]
 # trigger and toggle lists are exclusive
 for bt in trigger_buttons_list:
+    print(bt)
     toggle_buttons_list.remove(bt)
 
 
@@ -70,7 +38,7 @@ class MidiController:
         self.buttons += [TriggerButton(self.midiout, i) for i in trigger_buttons_list]
 
         # flash all buttons
-        # pretty and also checks on assignations
+        # reset state on the midi controller, pretty and also checks on assignations
         for button in self.buttons:
             button.on()
             time.sleep(0.02)
@@ -119,6 +87,8 @@ class MidiInputHandler:
                     self.o.next_filter()
                 if action == "previous":
                     self.o.prev_filter()
+                if action == "tap":
+                    print(self._wallclock)
 
                 if midi_addr_to_filter_bind.get(addr):  # button pressed is a filter control
                     binding = midi_addr_to_filter_bind[addr]
@@ -180,9 +150,9 @@ class TriggerButton:
         self.midiout = midiout
 
     def on(self):
-        m = [0x90, self.id, 127]
+        m = [176, self.id, 127]
         self.midiout.send_message(m)
 
     def off(self):
-        m = [0x90, self.id, 0]
+        m = [176, self.id, 0]
         self.midiout.send_message(m)

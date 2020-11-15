@@ -5,10 +5,11 @@ from performance_watcher import PerformanceWatcher
 from midi import MidiController
 from orchestrator import Orchestrator
 import random
+from config import config, WIDTH, HEIGHT
 
 
 def findInput():
-    i = 0
+    i = 1
     frame = None
     while frame is None:
         cap = cv.VideoCapture(i)
@@ -32,9 +33,9 @@ while True:
 
     frame = cv.flip(frame, 1)
 
-    # cv.imshow("frame", cv.resize(o.compute(frame), (1600, 1200)))
     try:
-        cv.imshow("frame", cv.resize(o.compute(frame), (800, 600)))
+        # cv.imshow("frame", cv.resize(o.compute(frame), (1600, 1200)))
+        cv.imshow("frame", cv.resize(o.compute(frame), (WIDTH, HEIGHT)))
     except Exception as e:
         print(str(e))
         pass
@@ -43,5 +44,5 @@ while True:
         break
 
     perfs.observe(time.time() - t1)
-    # print(perfs.get_fps())
+    print(perfs.get_fps())
 cv.destroyAllWindows()
