@@ -5,9 +5,9 @@ This is a software / hardware video FX box.
 ## Context 
 
 With the [beLow art collective](https://below.black), among other things, we play live VJ events.
-These performances need at least a video source (usually [Resolume](https://resolume.com/)), and effects.
+These performances need at least a video source (usually [Resolume](https://resolume.com/)), and effects. The video output is then displayed on a set of projectors or analog TVs.
 
-However I became bored with the effects available in Resolume, it's rigid midi mapping, and I guess I just wanted to build an autonomous system capable of doing the job.
+However I became bored with the effects available in Resolume, its rigid midi mapping, and I guess I just wanted to build an autonomous system capable of doing the job.
 Much like an analog video processor would do with composite signals, this takes [HDMI in over USB](https://www.amazon.fr/DIGITNOW-enregistreur-caméscope-Diffusion-Android-Mac/dp/B0895N9KM5/), and spits a modified image on HDMI.
 
 It's controllable using any MIDI controller, but supports natively the [Korg nanoKONTROL 2](https://www.thomann.de/fr/korg_nanokontrol_2_white.htm). One would have to write a different `config.ini` file to support another controller.
