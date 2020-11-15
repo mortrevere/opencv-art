@@ -11,8 +11,9 @@ class SummerFilter(Filter):
         self._blank = np.full((self.rows, self.cols, 3), 0, dtype=np.uint8)
         self.queue = deque([self._blank.copy() for _ in range(self.size)])
         # self.queue = [self._blank.copy() for _ in range(self.size)]
-        self.add_parameter("queue_len", bind="fader1", min=3, max=10, default=3)
+        self.add_parameter("queue_len", bind="fader1", min=2, max=7, default=2)
         self.add_parameter("blur", bind="button1s")
+        self.add_parameter("invert_color", bind="button1r")
         self._previous = None
 
     def compute(self, frame):
@@ -32,11 +33,15 @@ class SummerFilter(Filter):
         self.queue.pop()
         self.queue.appendleft(frame)
         for f in self.queue:
-            blur_size = (c % self.size + 1, c % self.size + 1)
+            blur_size = c % self.size + 1
+            # blur_size = min(blur_size, 6)
             if self.blur:
-                out += cv.blur(f, blur_size)
+                out += cv.blur(f, (blur_size, blur_size))
             else:
                 out += f
             c += 1
         # self._previous = out
-        return out
+        if self.invert_color:
+            return 255 - out
+        else:
+            return out
