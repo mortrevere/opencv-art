@@ -9,7 +9,7 @@ from config import config, WIDTH, HEIGHT
 
 
 def findInput():
-    i = 1
+    i = int(config["misc"]["default_input"])
     frame = None
     while frame is None:
         cap = cv.VideoCapture(i)

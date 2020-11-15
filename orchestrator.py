@@ -6,6 +6,7 @@ import importlib
 import threading
 import time
 import asyncio
+from config import config
 
 
 class Orchestrator:
@@ -32,7 +33,7 @@ class Orchestrator:
                     "GlobalFilter",
                 ):  # only load classes ending in "Filter"
                     self.filters += [klass[1](self.rows, self.cols)]  # instanciate
-                    if klass[0] == "AllPassFilter":  # default filter
+                    if klass[0] == config["misc"]["default_filter"]:  # default filter
                         self.current_filter = self.filters[-1]
 
         self.available_filters = [f.__class__.__name__ for f in self.filters]  # list of filters by name
@@ -47,7 +48,8 @@ class Orchestrator:
         return self.available_filters.index(self.current_filter_name)
 
     def compute(self, frame):
-        return self.global_filter.compute(self.current_filter.compute(frame))
+        # return self.global_filter.compute(self.current_filter.compute(frame))
+        return self.current_filter.compute(self.global_filter.compute(frame))
 
     def next_filter(self):
         next_i = (self.current_filter_index + 1) % (len(self.available_filters))
