@@ -50,11 +50,19 @@ class Output:
 
 
 class CV2Output(Output):
+    def __init__(self, config):
+        super().__init__(config)
+        self.fullscreen = "fullscreen" in config["output"] and bool(config["output"]["fullscreen"])
+        self.title = "Q to quit"
+        if self.fullscreen:
+            cv.namedWindow(self.title, cv.WND_PROP_FULLSCREEN)
+            cv.setWindowProperty(self.title, cv.WND_PROP_FULLSCREEN, 1)
+
     def __exit__(self, type, value, traceback):
         cv.destroyAllWindows()
 
     def _show(self, frame):
-        cv.imshow("Q to quit", frame)
+        cv.imshow(self.title, frame)
         return cv.waitKey(1) != ord("q")
 
 
