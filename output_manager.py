@@ -26,6 +26,12 @@ class Output:
         self.config = config
         self.width = int(config["output"]["width"])
         self.height = int(config["output"]["height"])
+        self.colorspace = None
+        if "colorspace" in config["input"] and config['input']['colorspace'] != "RGB":
+            try:
+                self.colorspace = getattr(cv, f"COLOR_RGB2{config['input']['colorspace']}")
+            except AttributeError:
+                print(f"Cannot find cv.COLOR_RGB2{config['input']['colorspace']}")
 
     def __enter__(self):
         return self
@@ -35,6 +41,8 @@ class Output:
 
     def show(self, frame):
         frame = resize_image(frame, self.width, self.height)
+        if self.colorspace is not None:
+            frame = cv.cvtColor(frame, self.colorspace)
         return self._show(frame)
 
     def _show(self, frame):
@@ -52,7 +60,8 @@ class Output:
 class CV2Output(Output):
     def __init__(self, config):
         super().__init__(config)
-        self.fullscreen = "fullscreen" in config["output"] and bool(config["output"]["fullscreen"])
+        self.fullscreen = "fullscreen" in config["output"] \
+            and config["output"]["fullscreen"].lower() == "true"
         self.title = "Q to quit"
         if self.fullscreen:
             cv.namedWindow(self.title, cv.WND_PROP_FULLSCREEN)

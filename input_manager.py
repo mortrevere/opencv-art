@@ -7,9 +7,15 @@ except ImportError:
 class Input:
     def __init__(self, config):
         self.config = config
-        self.flip = bool(config["input"]["flip"])
+        self.flip = "flip" in config \
+            and config["input"]["flip"].lower() == "true"
         self.current_frame = None
-        pass
+        self.colorspace = cv.COLOR_BGR2RGB
+        if "colorspace" in config["input"] and config['input']['colorspace'] != "RGB":
+            try:
+                self.colorspace = getattr(cv, f"COLOR_{config['input']['colorspace']}2RGB")
+            except AttributeError:
+                print(f"Cannot find cv.COLOR_{config['input']['colorspace']}2RGB")
 
     def __enter__(self):
         return self
@@ -19,6 +25,8 @@ class Input:
 
     def get_frame(self):
         frame = self._get_frame()
+        if self.colorspace is not None:
+            frame = cv.cvtColor(frame, self.colorspace)
         if self.flip:
             frame = cv.flip(frame, 1)
         self.current_frame = frame
