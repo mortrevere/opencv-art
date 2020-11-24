@@ -92,4 +92,4 @@ class PyVirtualCamOutput(Output):
 
 
 class V4L2Output(Output):
-    pass  # TODO
+    pass  # TODO, see https://github.com/Flashs/virtualvideo
