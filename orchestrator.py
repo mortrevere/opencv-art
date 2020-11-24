@@ -31,6 +31,7 @@ class Orchestrator:
                 if klass[0].endswith("Filter") and klass[0] not in (
                     "Filter",
                     "GlobalFilter",
+                    "DelayFilter"
                 ):  # only load classes ending in "Filter"
                     self.filters += [klass[1](self.rows, self.cols)]  # instanciate
                     if klass[0] == config["misc"]["default_filter"]:  # default filter
@@ -54,6 +55,7 @@ class Orchestrator:
     def next_filter(self):
         next_i = (self.current_filter_index + 1) % (len(self.available_filters))
         self.current_filter = self.filters[next_i]
+        print(self.current_filter_name)
 
     def prev_filter(self):
         if self.current_filter_index == 0:
@@ -62,6 +64,7 @@ class Orchestrator:
             next_i = self.current_filter_index - 1
 
         self.current_filter = self.filters[next_i]
+        print(self.current_filter_name)
 
     def send_ui_info(self, message):
         self.ui.send(message)

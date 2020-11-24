@@ -1,48 +1,44 @@
-import numpy as np
-import cv2 as cv
 import time
 from performance_watcher import PerformanceWatcher
 from midi import MidiController
+import keyboard
+from threading import Thread
 from orchestrator import Orchestrator
-import random
-from config import config, WIDTH, HEIGHT
+from config import config
+from input_manager import Input
+from output_manager import Output
 
 
-def findInput():
-    i = int(config["misc"]["default_input"])
-    frame = None
-    while frame is None:
-        cap = cv.VideoCapture(i)
-        ret, frame = cap.read()
-        i += 1
-    return cap, frame
+with Input.get_input(config) as inp:
+    frame = inp.get_frame()
+    if frame is None:
+        print("no frame received")
+        exit(1)
 
-
-cap, frame = findInput()
-
-rows, cols, depth = frame.shape
-
-perfs = PerformanceWatcher(15)
-
-o = Orchestrator(rows, cols, perfs)
-midi = MidiController(o)
-while True:
-    t1 = time.time()
-    ret, frame = cap.read()
     rows, cols, depth = frame.shape
 
-    frame = cv.flip(frame, 1)
+    perfs = PerformanceWatcher(15)
+    o = Orchestrator(rows, cols, perfs)
+    midi = MidiController(o)
 
-    try:
-        # cv.imshow("frame", cv.resize(o.compute(frame), (1600, 1200)))
-        cv.imshow("frame", cv.resize(o.compute(frame), (WIDTH, HEIGHT)))
-    except Exception as e:
-        print(str(e))
-        pass
+    def detect_key_press():
+        global key_pressed
+        keyboard.add_hotkey('right', o.next_filter)
+        keyboard.add_hotkey('left', o.prev_filter)
+        keyboard.wait()
 
-    if cv.waitKey(1) == ord("q"):
-        break
+    Thread(target=detect_key_press).start()
 
-    perfs.observe(time.time() - t1)
-    print(perfs.get_fps())
-cv.destroyAllWindows()
+    with Output.get_output(config) as out:
+        while True:
+            t1 = time.time()
+            frame = inp.get_frame()
+            frame = o.compute(frame)
+            if not out.show(frame):
+                print("quitting...")
+                break
+
+            perfs.observe(time.time() - t1)
+            # print(perfs.get_fps())
+
+# TODO clean kill
