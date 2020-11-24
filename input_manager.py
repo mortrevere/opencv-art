@@ -10,7 +10,7 @@ class Input:
         self.flip = "flip" in config \
             and config["input"]["flip"].lower() == "true"
         self.current_frame = None
-        self.colorspace = cv.COLOR_BGR2RGB
+        self.colorspace = None
         if "colorspace" in config["input"] and config['input']['colorspace'] != "RGB":
             try:
                 self.colorspace = getattr(cv, f"COLOR_{config['input']['colorspace']}2RGB")
