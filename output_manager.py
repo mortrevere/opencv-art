@@ -1,6 +1,12 @@
 import cv2 as cv
+import numpy as np
+from threading import Thread
 try:
     import pyvirtualcam
+except ImportError:
+    pass
+try:
+    import virtualvideo
 except ImportError:
     pass
 
@@ -101,4 +107,48 @@ class PyVirtualCamOutput(Output):
 
 
 class V4L2Output(Output):
-    pass  # TODO, see https://github.com/Flashs/virtualvideo
+    """
+    see https://github.com/umlaeute/v4l2loopback
+    and https://github.com/Flashs/virtualvideo
+    """
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.output_file = int(config["output"]["output_file"])
+        if "fps" in config["output"]:
+            self.fps = int(config["output"]["fps"])
+        else:
+            self.fps = 30
+
+        class MyVideoSource(virtualvideo.VideoSource):
+            def __init__(self, width, height, fps):
+                self._fps = fps
+                self._size = (width, height)
+                self.running = True
+                self.frame = np.zeros((height, width, 3), np.uint8)
+
+            def img_size(self):
+                return self._size
+
+            def fps(self):
+                return self._fps
+
+            def generator(self):
+                while self.running:
+                    yield self.frame
+
+        self.vidsrc = MyVideoSource(self.width, self.height, self.fps)
+        self.fvd = virtualvideo.FakeVideoDevice()
+        self.fvd.init_input(self.vidsrc)
+        self.fvd.init_output(self.output_file, self.width, self.height, fps=self.fps)
+
+    def __enter__(self):
+        Thread(target=self.fvd.run).start()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.vidsrc.running = False
+
+    def _show(self, frame):
+        self.vidsrc.frame = frame
+        return True

@@ -22,7 +22,6 @@ with Input.get_input(config) as inp:
     midi = MidiController(o)
 
     def detect_key_press():
-        global key_pressed
         keyboard.add_hotkey('right', o.next_filter)
         keyboard.add_hotkey('left', o.prev_filter)
         keyboard.wait()
