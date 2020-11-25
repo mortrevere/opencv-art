@@ -3,3 +3,4 @@ python-rtmidi
 opencv-python
 numpy
 mido
+keyboard
