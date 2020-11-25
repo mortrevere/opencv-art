@@ -22,8 +22,8 @@ with Input.get_input(config) as inp:
     midi = MidiController(o)
 
     def detect_key_press():
-        keyboard.add_hotkey('right', o.next_filter)
-        keyboard.add_hotkey('left', o.prev_filter)
+        keyboard.add_hotkey(config["misc"]["keyboard_next_filter"], o.next_filter)
+        keyboard.add_hotkey(config["misc"]["keyboard_prev_filter"], o.prev_filter)
         keyboard.wait()
 
     Thread(target=detect_key_press).start()
@@ -38,6 +38,6 @@ with Input.get_input(config) as inp:
                 break
 
             perfs.observe(time.time() - t1)
-            # print(perfs.get_fps())
+            print(perfs.get_fps(), end="\r")
 
 # TODO clean kill
