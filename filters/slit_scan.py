@@ -4,92 +4,77 @@ import math
 from filter import Filter
 
 
-class DelayFilter(Filter):
-    def init(self, masks):
-        self.max_frames = len(masks)
-        self.frames = [np.zeros((self.rows, self.cols, 3), np.uint8)] * len(masks)
-        self.masks = masks
+class SlitScanFilter(Filter):
+    def init(self):
+        self.add_parameter("max_frames", bind="fader1", min=10, max=500, default=100)
+        self.add_parameter(name="invert_dir", bind="button1r", default=False)
+        self.ref_frame = None
+        self.zeros = np.zeros((self.rows, self.cols, 1), np.uint8)
+        self.ones = np.ones((self.rows, self.cols, 1), np.uint8)
         self.frame_count = 0
+        self.masks = [None for i in range(self.max_frames)]
+
+    def get_mask(self, i):
+        if self.max_frames != len(self.masks):
+            self.masks = [None for i in range(self.max_frames)]
+        if self.masks[i] is None:
+            self.masks[i] = self._get_mask(i)
+        return self.masks[i]
+
+    def _get_mask(self, i, max_frames):
+        return self.zeros
 
     def compute(self, frame):
-        pos = self.frame_count % self.max_frames
-        self.frames[pos] = frame
-        res_frame = np.zeros((self.rows, self.cols, 3), np.uint8)
-        for i in range(self.max_frames):
-            frame_i = self.frames[(pos + self.max_frames - i) % self.max_frames]
-            res_frame = cv.add(res_frame, cv.bitwise_and(frame_i, frame_i, mask=self.masks[i]))
+        mask = self.get_mask(self.frame_count % self.max_frames)
+        inv_mask = 1 - mask
+        maskNext = self.get_mask((self.frame_count + 1) % self.max_frames)
+        if self.ref_frame is None:
+            self.ref_frame = frame
+        self.ref_frame = cv.bitwise_and(self.ref_frame, self.ref_frame, mask=inv_mask)
+        self.ref_frame = cv.add(self.ref_frame, cv.bitwise_and(frame, frame, mask=mask))
+        res_frame = cv.bitwise_and(
+            self.ref_frame, self.ref_frame, mask=cv.bitwise_xor(inv_mask, maskNext)
+        )
         self.frame_count += 1
         return res_frame
 
 
-class SlitScanLeftRightFilter(DelayFilter):
+class SlitScanHorizontalFilter(SlitScanFilter):
+    def _get_mask(self, i):
+        bar_size = math.ceil(self.cols / self.max_frames) + 1
+        pos0 = bar_size * i
+        mask = np.zeros((self.rows, self.cols, 1), np.uint8)
+        if not self.invert_dir:
+            mask[:, pos0:] = self.ones[:, pos0:]
+        else:
+            mask[:, : self.cols - pos0] = self.ones[:, : self.cols - pos0]
+        return mask
+
+
+class SlitScanVerticalFilter(SlitScanFilter):
+    def _get_mask(self, i):
+        bar_size = math.ceil(self.rows / self.max_frames) + 1
+        pos0 = bar_size * i
+        mask = np.zeros((self.rows, self.cols, 1), np.uint8)
+        if not self.invert_dir:
+            mask[pos0:, :] = self.ones[pos0:, :]
+        else:
+            mask[: self.rows - pos0, :] = self.ones[: self.rows - pos0, :]
+        return mask
+
+
+class SlitScanCircleFilter(SlitScanFilter):
     def init(self):
-        max_frames = 50
-        bar_size = math.ceil(self.cols / max_frames) + 1
-        masks = [cv.rectangle(
-            np.zeros((self.rows, self.cols, 1), np.uint8),
-            (bar_size * i, 0),
-            (bar_size * (i + 1) - 1, self.rows), 1, -1)
-                for i in range(max_frames)]
-        super().init(masks)
+        super().init()
+        self.center = (round(self.cols / 2.0), round(self.rows / 2.0))
 
-
-class SlitScanRightLeftFilter(DelayFilter):
-    def init(self):
-        max_frames = 50
-        bar_size = math.ceil(self.cols / max_frames) + 1
-        masks = [cv.rectangle(
-            np.zeros((self.rows, self.cols, 1), np.uint8),
-            (bar_size * i, 0),
-            (bar_size * (i + 1) - 1, self.rows), 1, -1)
-                for i in range(max_frames - 1, -1, -1)]
-        super().init(masks)
-
-
-class SlitScanUpDownFilter(DelayFilter):
-    def init(self):
-        max_frames = 50
-        bar_size = math.ceil(self.rows / max_frames) + 1
-        masks = [cv.rectangle(
-            np.zeros((self.rows, self.cols, 1), np.uint8),
-            (0, bar_size * i),
-            (self.cols, bar_size * (i + 1) - 1), 1, -1)
-                for i in range(max_frames)]
-        super().init(masks)
-
-class SlitScanDownUpFilter(DelayFilter):
-    def init(self):
-        max_frames = 50
-        bar_size = math.ceil(self.rows / max_frames) + 1
-        masks = [cv.rectangle(
-            np.zeros((self.rows, self.cols, 1), np.uint8),
-            (0, bar_size * i),
-            (self.cols, bar_size * (i + 1) - 1), 1, -1)
-                for i in range(max_frames - 1, -1, -1)]
-        super().init(masks)
-
-class SlitScanCircleOutFilter(DelayFilter):
-    def init(self):
-        max_frames = 50
-        circle_size = math.ceil(max(self.rows, self.cols) / max_frames) + 1
-        masks = []
-        center = (round(self.cols/2.0), round(self.rows/2.0))
-        for i in range(max_frames):
+    def _get_mask(self, i):
+        circle_size = math.ceil(max(self.rows, self.cols) / (self.max_frames * 2)) + 1
+        if self.invert_dir:
             mask = np.zeros((self.rows, self.cols, 1), np.uint8)
-            mask = cv.circle(mask, center, circle_size * (i + 1), 1, -1)
-            mask = cv.circle(mask, center, circle_size * i, 0, -1)
-            masks += [mask]
-        super().init(masks)
-
-class SlitScanCircleInFilter(DelayFilter):
-    def init(self):
-        max_frames = 50
-        circle_size = math.ceil(max(self.rows, self.cols) / max_frames) + 1
-        masks = []
-        center = (round(self.cols/2.0), round(self.rows/2.0))
-        for i in range(max_frames - 1, -1, -1):
-            mask = np.zeros((self.rows, self.cols, 1), np.uint8)
-            mask = cv.circle(mask, center, circle_size * (i + 1), 1, -1)
-            mask = cv.circle(mask, center, circle_size * i, 0, -1)
-            masks += [mask]
-        super().init(masks)
+            return cv.circle(
+                mask, self.center, circle_size * (self.max_frames - i + 1), 1, -1
+            )
+        else:
+            mask = np.ones((self.rows, self.cols, 1), np.uint8)
+            return cv.circle(mask, self.center, circle_size * i, 0, -1)

@@ -31,7 +31,8 @@ class Orchestrator:
                 if klass[0].endswith("Filter") and klass[0] not in (
                     "Filter",
                     "GlobalFilter",
-                    "DelayFilter"
+                    "DelayFilter",
+                    "SlitScanFilter"
                 ):  # only load classes ending in "Filter"
                     self.filters += [klass[1](self.rows, self.cols)]  # instanciate
                     if klass[0] == config["misc"]["default_filter"]:  # default filter
