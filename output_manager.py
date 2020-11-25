@@ -33,11 +33,12 @@ class Output:
         self.width = int(config["output"]["width"])
         self.height = int(config["output"]["height"])
         self.colorspace = None
-        if "colorspace" in config["input"] and config['input']['colorspace'] != "RGB":
+        if "colorspace" in config["output"] and config['output']['colorspace'] != "RGB":
             try:
-                self.colorspace = getattr(cv, f"COLOR_RGB2{config['input']['colorspace']}")
+                self.colorspace = getattr(cv, f"COLOR_RGB2{config['output']['colorspace']}")
+                print(f"output: cv.COLOR_RGB2{config['output']['colorspace']}")
             except AttributeError:
-                print(f"Cannot find cv.COLOR_RGB2{config['input']['colorspace']}")
+                print(f"output: Cannot find cv.COLOR_RGB2{config['output']['colorspace']}")
 
     def __enter__(self):
         return self
@@ -103,7 +104,7 @@ class PyVirtualCamOutput(Output):
         frame = cv.cvtColor(frame, cv.COLOR_RGB2RGBA)
         self.cam.send(frame)
         self.cam.sleep_until_next_frame()
-        return False
+        return True
 
 
 class V4L2Output(Output):
