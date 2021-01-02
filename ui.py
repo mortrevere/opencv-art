@@ -14,7 +14,7 @@ class UI:
     def serve(self):
         asyncio.set_event_loop(asyncio.new_event_loop())
         asyncio.get_event_loop().run_until_complete(
-            websockets.serve(self.handle, "localhost", 8765)
+            websockets.serve(self.handle, "0.0.0.0", 8765)
         )
         asyncio.get_event_loop().run_forever()
 
