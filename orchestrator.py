@@ -7,7 +7,8 @@ import threading
 import time
 import asyncio
 from config import config
-
+import threading
+import queue
 
 class Orchestrator:
     def __init__(self, rows, cols, performance_watcher, cap_performance_watcher):
@@ -19,6 +20,14 @@ class Orchestrator:
         self.current_filter = None
         self.global_filter = basic.GlobalFilter(rows, cols)
 
+        self.last_frame = None
+        self.input_frames = queue.Queue(maxsize=100)
+        self.output_frames = queue.Queue(maxsize=100)
+        self.filter_threads = []
+
+        for i in range(30):
+            self.filter_threads += [threading.Thread(target=self.compute_worker)]
+        
         self.create_ui_threads()
 
         # dynamically loads filters instances
@@ -46,6 +55,8 @@ class Orchestrator:
             f.__class__.__name__ for f in self.filters
         ]  # list of filters by name
         print(self.available_filters)
+        for t in self.filter_threads:
+            t.start()
 
     @property
     def current_filter_name(self):
@@ -55,8 +66,15 @@ class Orchestrator:
     def current_filter_index(self):
         return self.available_filters.index(self.current_filter_name)
 
+    def compute_worker(self):
+        while 1:
+            self.output_frames.put(self.current_filter.compute(self.input_frames.get()))
+
     def compute(self, frame):
         # return self.global_filter.compute(self.current_filter.compute(frame))
+        self.input_frames.put(frame)
+        #self.last_frame = self.output_frames.pop()
+        return self.output_frames.get()
         if config["misc"]["enable_global_filter"]:
             return self.current_filter.compute(self.global_filter.compute(frame))
         else:
