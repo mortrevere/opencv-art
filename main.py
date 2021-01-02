@@ -15,7 +15,7 @@ midi = MidiController(o)
 
 i = 0
 
-display = int(config["misc"]["default_input"]) != -1
+display = int(config["misc"]["display"]) != -1
 
 while True:
     t1 = time.time()
