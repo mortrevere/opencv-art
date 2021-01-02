@@ -73,12 +73,17 @@ class Orchestrator:
 
     def compute(self, frame):
 
-        self.input_frames.put(frame)
+        
         try:
+            self.input_frames.put(frame, block=False)
             self.last_frame = self.output_frames.get(block=(self.last_frame is None))
             return self.last_frame
         except queue.Empty:
             #print("empty")
+            return self.last_frame
+        except queue.Full:
+            for i in range(self.input_frames.maxsize - 1):
+                self.input_frames.get()
             return self.last_frame
 
         if config["misc"]["enable_global_filter"]:
