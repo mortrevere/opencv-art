@@ -18,7 +18,6 @@ i = 0
 display = int(config["misc"]["display"]) != -1
 
 while True:
-    t1 = time.time()
     if not stream.fresh_frame:
         time.sleep(1/300)
         continue
@@ -35,7 +34,6 @@ while True:
     if display and cv.waitKey(1) == ord("q"):
         break
 
-    perfs.observe(time.time() - t1)
     if i % 15 == 0:
         print("PRC:", perfs.get_fps())
         print(o.output_frames.qsize(), o.input_frames.qsize())

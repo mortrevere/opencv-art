@@ -68,12 +68,13 @@ class Orchestrator:
 
     def compute_worker(self):
         while 1:
-            self.output_frames.put(self.current_filter.compute(self.input_frames.get()))
+            new_frame = self.input_frames.get()
+            t1 = time.time()
+            self.output_frames.put(self.current_filter.compute(new_frame))
+            self.performance_watcher.observe(time.time() - t1)
             
 
     def compute(self, frame):
-
-        
         try:
             self.input_frames.put(frame, block=False)
             self.last_frame = self.output_frames.get(block=(self.last_frame is None))
