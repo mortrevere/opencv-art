@@ -38,6 +38,7 @@ class VideoInput:
         while 1:
             t1 = time.time()
             ret, self.frame = self.cap.read()
+            self.fresh_frame = True
             self.perfs.observe(time.time() - t1)
             if i % 15 == 0:
                 print("CAP:", self.perfs.get_fps())

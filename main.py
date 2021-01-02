@@ -19,12 +19,15 @@ display = int(config["misc"]["display"]) != -1
 
 while True:
     t1 = time.time()
-    
+    if not stream.fresh_frame:
+        time.sleep(1/300)
+        continue
     try:
         if display:
             cv.imshow("frame", cv.resize(o.compute(stream.frame), (WIDTH, HEIGHT)))
         else:
             o.compute(stream.frame)
+        stream.fresh_frame = False
     except Exception as e:
         print(str(e))
         pass
@@ -35,6 +38,7 @@ while True:
     perfs.observe(time.time() - t1)
     if i % 15 == 0:
         print("PRC:", perfs.get_fps())
+        print(o.output_frames.qsize(), o.input_frames.qsize())
     i += 1
 
 cv.destroyAllWindows()

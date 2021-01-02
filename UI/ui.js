@@ -19,6 +19,24 @@ var config = {
 
             ],
             fill: false,
+        },
+        {
+            label: 'IN QUEUE',
+            backgroundColor: "#FF0000",
+            borderColor: "#FF0000",
+            data: [
+
+            ],
+            fill: false,
+        },
+        {
+            label: 'OUTQUEUE',
+            backgroundColor: "#FF0000",
+            borderColor: "#FF0000",
+            data: [
+
+            ],
+            fill: false,
         }]
     },
     options: {
@@ -61,7 +79,7 @@ var config = {
 
 
 function connect() {
-    var ws = new WebSocket('ws://localhost:8765');
+    var ws = new WebSocket('ws://192.168.0.22:8765');
     ws.onopen = function () {
         // subscribe to some channels
         console.log("Connected !")
@@ -80,6 +98,15 @@ function connect() {
         if (chunks[1] == "capfps") {
             //config.data.labels.push('')
             config.data.datasets[1].data.push(chunks[2])
+        }
+
+        if (chunks[1] == "inq") {
+            //config.data.labels.push('')
+            config.data.datasets[2].data.push(chunks[2])
+        }
+        if (chunks[1] == "outq") {
+            //config.data.labels.push('')
+            config.data.datasets[3].data.push(chunks[2])
         }
 
         if (config.data.labels.length >= 60) {

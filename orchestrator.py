@@ -25,7 +25,7 @@ class Orchestrator:
         self.output_frames = queue.Queue(maxsize=100)
         self.filter_threads = []
 
-        for i in range(30):
+        for i in range(int(config["misc"]["worker_threads"])):
             self.filter_threads += [threading.Thread(target=self.compute_worker)]
         
         self.create_ui_threads()
@@ -69,12 +69,18 @@ class Orchestrator:
     def compute_worker(self):
         while 1:
             self.output_frames.put(self.current_filter.compute(self.input_frames.get()))
+            
 
     def compute(self, frame):
-        # return self.global_filter.compute(self.current_filter.compute(frame))
+
         self.input_frames.put(frame)
-        #self.last_frame = self.output_frames.pop()
-        return self.output_frames.get()
+        try:
+            self.last_frame = self.output_frames.get(block=(self.last_frame is None))
+            return self.last_frame
+        except queue.Empty:
+            #print("empty")
+            return self.last_frame
+
         if config["misc"]["enable_global_filter"]:
             return self.current_filter.compute(self.global_filter.compute(frame))
         else:
@@ -103,10 +109,11 @@ class Orchestrator:
     def send_fps_to_ui(self):
         while True:
             fps = self.performance_watcher.get_fps()
-            message = f"fps:{fps}"
-            self.send_ui_info(message)
+            self.send_ui_info(f"fps:{fps}")
 
             fps = self.cap_performance_watcher.get_fps()
-            message = f"capfps:{fps}"
-            self.send_ui_info(message)
+            self.send_ui_info(f"capfps:{fps}")
+
+            self.send_ui_info(f"outq:{self.output_frames.qsize()}")
+            self.send_ui_info(f"inq:{self.input_frames.qsize()}")
             time.sleep(1)
