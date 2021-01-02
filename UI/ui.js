@@ -10,6 +10,15 @@ var config = {
 
             ],
             fill: false,
+        },
+        {
+            label: 'CAPFPS',
+            backgroundColor: "#FF0000",
+            borderColor: "#FF0000",
+            data: [
+
+            ],
+            fill: false,
         }]
     },
     options: {
@@ -68,9 +77,15 @@ function connect() {
             config.data.datasets[0].data.push(chunks[2])
         }
 
+        if (chunks[1] == "capfps") {
+            //config.data.labels.push('')
+            config.data.datasets[1].data.push(chunks[2])
+        }
+
         if (config.data.labels.length >= 60) {
             config.data.labels.shift()
             config.data.datasets[0].data.shift()
+            config.data.datasets[1].data.shift()
         }
         window.myLine.update();
     };

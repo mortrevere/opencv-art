@@ -15,7 +15,9 @@ class DragFilter(Filter):
 
     def compute(self, frame):
         f = cv.cvtColor(cv.medianBlur(frame, 3), cv.COLOR_BGR2GRAY)
-        mask = cv.adaptiveThreshold(f, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 17, 4)
+        mask = cv.adaptiveThreshold(
+            f, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 17, 4
+        )
         invert_mask = 255 - mask
 
         source = cv.bitwise_and(frame, frame, mask=invert_mask)
@@ -25,7 +27,13 @@ class DragFilter(Filter):
         # print(self.amplitude)
         self.M = np.float32([[1, 0, self.amplitude], [0, 1, self.amplitude]])
 
-        acc = cv.addWeighted(self._previous, 0.9, cv.warpAffine(source, self.M, (self.cols, self.rows)), 1, 0.0,)
+        acc = cv.addWeighted(
+            self._previous,
+            0.9,
+            cv.warpAffine(source, self.M, (self.cols, self.rows)),
+            1,
+            0.0,
+        )
         self._previous = acc
         # invert_frame = cv.bitwise_not(frame)
         # acc = cv.bitwise_or(acc, cv.bitwise_and(invert_frame, invert_frame, mask=invert_mask))

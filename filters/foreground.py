@@ -38,7 +38,9 @@ class ForegroundFilter(Filter):
     def compute(self, frame):
         # out = self._blank.copy()
         f = cv.cvtColor(cv.medianBlur(frame, 3), cv.COLOR_BGR2GRAY)
-        mask = cv.adaptiveThreshold(f, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 17, 4)
+        mask = cv.adaptiveThreshold(
+            f, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 17, 4
+        )
         invert_mask = 255 - mask
 
         og_frame = frame.copy()
@@ -63,10 +65,15 @@ class ForegroundFilter(Filter):
         # print(speed, direction1, direction2, direction3, direction4)
         # self.M = np.float32([[1,0,speed],[0,1,speed]])
         # self.M = np.float32([[direction1,1-direction1,speed],[direction3,1-direction3,speed]])
-        self.M = np.float32([[direction1, 1 - direction1, speed], [direction3, 1 - direction3, speed]])
+        self.M = np.float32(
+            [[direction1, 1 - direction1, speed], [direction3, 1 - direction3, speed]]
+        )
         f = cv.warpAffine(f, self.M, (self.cols, self.rows))
 
-        self.previous = cv.cvtColor(cv.warpAffine(invert_mask, self.M, (self.cols, self.rows)), cv.COLOR_GRAY2BGR,)
+        self.previous = cv.cvtColor(
+            cv.warpAffine(invert_mask, self.M, (self.cols, self.rows)),
+            cv.COLOR_GRAY2BGR,
+        )
         self.previous = cv.bitwise_or(f, self.previous)
         # f = cv.bitwise_or(cv.cvtColor(invert_mask, cv.COLOR_GRAY2BGR), f)
         f = cv.bitwise_or(f, og_frame)

@@ -10,10 +10,11 @@ from config import config
 
 
 class Orchestrator:
-    def __init__(self, rows, cols, performance_watcher):
+    def __init__(self, rows, cols, performance_watcher, cap_performance_watcher):
         self.rows = rows
         self.cols = cols
         self.performance_watcher = performance_watcher
+        self.cap_performance_watcher = cap_performance_watcher
         self.ui = UI(asyncio.get_event_loop())
         self.current_filter = None
         self.global_filter = basic.GlobalFilter(rows, cols)
@@ -21,9 +22,14 @@ class Orchestrator:
         self.create_ui_threads()
 
         # dynamically loads filters instances
-        available_filters = [module for module in sys.modules.keys() if module.startswith("filters.")]
+        available_filters = [
+            module for module in sys.modules.keys() if module.startswith("filters.")
+        ]
         self.filters_module = importlib.import_module("filters")
-        self.filters_module = [getattr(self.filters_module, filter[len("filters.") :]) for filter in available_filters]
+        self.filters_module = [
+            getattr(self.filters_module, filter[len("filters.") :])
+            for filter in available_filters
+        ]
 
         self.filters = []  # holds filters instances
         for f in self.filters_module:
@@ -36,7 +42,9 @@ class Orchestrator:
                     if klass[0] == config["misc"]["default_filter"]:  # default filter
                         self.current_filter = self.filters[-1]
 
-        self.available_filters = [f.__class__.__name__ for f in self.filters]  # list of filters by name
+        self.available_filters = [
+            f.__class__.__name__ for f in self.filters
+        ]  # list of filters by name
         print(self.available_filters)
 
     @property
@@ -49,7 +57,11 @@ class Orchestrator:
 
     def compute(self, frame):
         # return self.global_filter.compute(self.current_filter.compute(frame))
-        return self.current_filter.compute(self.global_filter.compute(frame))
+        if config["misc"]["enable_global_filter"]:
+            return self.current_filter.compute(self.global_filter.compute(frame))
+        else:
+            return self.current_filter.compute(frame)
+
 
     def next_filter(self):
         next_i = (self.current_filter_index + 1) % (len(self.available_filters))
@@ -74,5 +86,9 @@ class Orchestrator:
         while True:
             fps = self.performance_watcher.get_fps()
             message = f"fps:{fps}"
+            self.send_ui_info(message)
+
+            fps = self.cap_performance_watcher.get_fps()
+            message = f"capfps:{fps}"
             self.send_ui_info(message)
             time.sleep(1)

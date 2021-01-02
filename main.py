@@ -2,47 +2,39 @@ import numpy as np
 import cv2 as cv
 import time
 from performance_watcher import PerformanceWatcher
+from video_capture import VideoInput
 from midi import MidiController
 from orchestrator import Orchestrator
 import random
 from config import config, WIDTH, HEIGHT
 
-
-def findInput():
-    i = int(config["misc"]["default_input"])
-    frame = None
-    while frame is None:
-        cap = cv.VideoCapture(i)
-        ret, frame = cap.read()
-        i += 1
-    return cap, frame
-
-
-cap, frame = findInput()
-
-rows, cols, depth = frame.shape
-
 perfs = PerformanceWatcher(15)
-
-o = Orchestrator(rows, cols, perfs)
+stream = VideoInput(int(config["misc"]["default_input"]))
+o = Orchestrator(stream.rows, stream.cols, perfs, stream.perfs)
 midi = MidiController(o)
+
+i = 0
+
+display = int(config["misc"]["default_input"]) != -1
+
 while True:
     t1 = time.time()
-    ret, frame = cap.read()
-    rows, cols, depth = frame.shape
-
-    frame = cv.flip(frame, 1)
-
+    
     try:
-        # cv.imshow("frame", cv.resize(o.compute(frame), (1600, 1200)))
-        cv.imshow("frame", cv.resize(o.compute(frame), (WIDTH, HEIGHT)))
+        if display:
+            cv.imshow("frame", cv.resize(o.compute(stream.frame), (WIDTH, HEIGHT)))
+        else:
+            o.compute(stream.frame)
     except Exception as e:
         print(str(e))
         pass
 
-    if cv.waitKey(1) == ord("q"):
+    if display and cv.waitKey(1) == ord("q"):
         break
 
     perfs.observe(time.time() - t1)
-    print(perfs.get_fps())
+    if i % 15 == 0:
+        print("PRC:", perfs.get_fps())
+    i += 1
+
 cv.destroyAllWindows()

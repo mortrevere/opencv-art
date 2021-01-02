@@ -23,7 +23,9 @@ class SummerFilter(Filter):
             self.size = queue_len
             new_queue = list(self.queue)
             if queue_len > len(self.queue):
-                new_queue += [self._blank.copy() for _ in range(queue_len - len(self.queue))]
+                new_queue += [
+                    self._blank.copy() for _ in range(queue_len - len(self.queue))
+                ]
             else:
                 new_queue = new_queue[0:queue_len]
             self.queue = deque(new_queue)
