@@ -5,7 +5,7 @@ from filter import Filter
 import random
 from oscillator import Oscillator
 
-class AllPassFilter(Filter):
+class AllPassFilterFB(Filter):
     def init(self):
         self.uy = int(480/4)
         self.y = 0
@@ -14,7 +14,7 @@ class AllPassFilter(Filter):
         self.x = 120
         self.w = self.ux*4 - (2*self.x)
         print(self.cols, self.rows)
-        self.prev = self._blank.copy()
+        self.prev = None
         self.i = 0
         self.flip = 1
         self.m = Oscillator(1.618, zero=True)
@@ -24,18 +24,11 @@ class AllPassFilter(Filter):
         self.M = np.float32([[1, 0, random.choice([2, -2, 0])], [0, 1, 0]])
         pass
 
-    def compute(self, frame, vid=None):
-        self.i += 1
+    def compute(self, frame):
         #print(self.o.next()*self.rows)
         #return frame#cv.resize(frame,(1080, 1920), interpolation = cv.INTER_CUBIC)
 
-        #f = cv.bitwise_or(frame, vid)
-        #f = frame + vid
-        f = cv.addWeighted(frame,0.9,vid,0.1,0.0)
-        f = cv.addWeighted(f,0.5,self.prev,0.5,0.0)
-        self.prev = f
-
-        return f
+        
 
 
         mod = self.m.next()

@@ -17,24 +17,41 @@ i = 0
 
 display = int(config["misc"]["display"]) != -1
 
+perfs2 = PerformanceWatcher(15)
+capname = "frame"
+cv.namedWindow(capname, cv.WND_PROP_FULLSCREEN)
+cv.setWindowProperty(capname, cv.WND_PROP_FULLSCREEN, cv.WINDOW_FULLSCREEN)
+cv.moveWindow(capname, 1920, 0)
+#cv.imshow(capname, frame)
 while True:
+    t1 = time.time()
+    # cap output FPS to capture FPS
     if not stream.fresh_frame:
+        #if o.output_frames.qsize() == 0:
+            #print("here")
         time.sleep(1/300)
         continue
     try:
         if display:
-            cv.imshow("frame", cv.resize(o.compute(stream.frame), (WIDTH, HEIGHT)))
+            #_, frame_vid = stream.cap_video.read()
+            #frame_vid = cv.resize(frame_vid, (720, 480))
+            #cv.imshow("frame", cv.addWeighted(o.compute(stream.frame, vid=frame_vid),0.5,cv.resize(frame_vid, (720, 480)),0.7,0.0))
+            #cv.imshow("frame", o.compute(stream.frame, vid=frame_vid))
+            cv.imshow("frame", cv.resize(o.compute(stream.frame, vid=None), (WIDTH, HEIGHT)))
         else:
             o.compute(stream.frame)
-        stream.fresh_frame = False
+        if o.output_frames.qsize() == 0:
+            stream.fresh_frame = False # tag the current frame as processed
     except Exception as e:
         print(str(e))
         pass
 
     if display and cv.waitKey(1) == ord("q"):
         break
+    perfs2.observe(time.time() - t1)
 
     if i % 15 == 0:
+        print("OUT:", perfs2.get_fps())
         print("PRC:", perfs.get_fps())
         print(o.output_frames.qsize(), o.input_frames.qsize())
     i += 1

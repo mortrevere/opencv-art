@@ -24,7 +24,9 @@ class VideoInput:
         i = self.default_input
         print(i)
         frame = None
+        self.cap_video = cv.VideoCapture('/home/leo/rythmus21.mp4')
         while frame is None:
+            
             cap = cv.VideoCapture(i, cv.CAP_V4L2)
             for o, v in OPTIONS.items():
                 print(getattr(cv, o), o, v)
@@ -36,10 +38,11 @@ class VideoInput:
     def update(self):
         i = 0
         while 1:
+            time.sleep(1/60)
             t1 = time.time()
             ret, self.frame = self.cap.read()
             self.fresh_frame = True
             self.perfs.observe(time.time() - t1)
-            if i % 15 == 0:
-                print("CAP:", self.perfs.get_fps())
+            #if i % 15 == 0:
+            #    print("CAP:", self.perfs.get_fps())
             i += 1

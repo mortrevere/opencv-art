@@ -8,7 +8,7 @@ from oscillator import Oscillator
 class GradientFilter(Filter):
     def init(self):
         self.M = np.float32([[1, 0, 0], [0, 1, -3]])
-        self.add_parameter("color_freq", bind="knob1", min=1 / 5, max=8, default=1 / 5)
+        self.add_parameter("color_freq", bind="knob1", min=1 / 5, max=8, default=1)
         self.add_parameter("mouv_freq", bind="knob2", min=1, max=40, default=1)
         self.add_parameter("mouv_amplitude", bind="fader2", min=1, max=12, default=1)
         self.add_parameter("switch_lfo_mouv", bind="button2r")

@@ -79,7 +79,7 @@ var config = {
 
 
 function connect() {
-    var ws = new WebSocket('ws://192.168.0.22:8765');
+    var ws = new WebSocket('ws://localhost:8765');
     ws.onopen = function () {
         // subscribe to some channels
         console.log("Connected !")
@@ -113,6 +113,8 @@ function connect() {
             config.data.labels.shift()
             config.data.datasets[0].data.shift()
             config.data.datasets[1].data.shift()
+            config.data.datasets[2].data.shift()
+            config.data.datasets[3].data.shift()
         }
         window.myLine.update();
     };

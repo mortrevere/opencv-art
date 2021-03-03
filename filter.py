@@ -1,7 +1,7 @@
 import numpy as np
 import cv2 as cv
 import math
-
+import timeit
 
 class Parameter:
     def __init__(self, name, ref, description, min, max, default):
@@ -25,7 +25,8 @@ class Parameter:
 
 
 class Filter:
-    def __init__(self, rows, cols):
+    def __init__(self, rows, cols, orchestrator=None):
+        self.o = orchestrator
         self.parameters = {}
         self.parameters_binding = {}
         self.rows = rows
@@ -71,3 +72,7 @@ class Filter:
     def reset_all_parameters(self):
         for name in self.parameters.keys():
             self.reset_parameter(name)
+
+    def benchmark(self):
+        t = timeit.timeit(lambda: self.compute(self._blank), number=100)
+        return 100/t
