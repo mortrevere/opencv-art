@@ -1,5 +1,8 @@
 from ui import UI
 from filters import *
+from generators import *
+from wipers import *
+from transformers import *
 from audio import AudioCapture
 
 import sys, inspect
@@ -13,6 +16,9 @@ import queue
 
 from itertools import count
 
+import numpy as np
+import cv2 as cv
+
 class Orchestrator:
     def __init__(self, rows, cols, performance_watcher, cap_performance_watcher):
         self.rows = rows
@@ -24,22 +30,44 @@ class Orchestrator:
         self.global_filter = basic.GlobalFilter(rows, cols)
 
         self.last_frame = None
-        self.input_frames = queue.Queue(maxsize=30)
-        self.output_frames = queue.Queue(maxsize=10)
-        self.filter_threads = []
 
         self.last_frame_id = 0
         self.unique = count()
 
-        for i in range(int(config["misc"]["worker_threads"])):
-            self.filter_threads += [threading.Thread(target=self.compute_worker)]
+        self.previous_frame = None
         
         self.create_ui_threads()
 
         self.audio = AudioCapture()
         self.create_audio_threads()
 
+        self.engines = {"generators" : [], "wipers" : [], "transformers" : []}
+        self.engines_order = ["generators", "transformers", "wipers"]
+
+        for engine_type in self.engines.keys():
+
+            available = [
+                module for module in sys.modules.keys() if module.startswith(engine_type + ".")
+            ]
+
+            modules = importlib.import_module(engine_type)
+            modules = [
+                getattr(modules, filter[len(engine_type + ".") :])
+                for filter in available
+            ]
+
+            for f in modules:
+                for klass in inspect.getmembers(f, inspect.isclass):
+                    if klass[0].endswith("Filter") and klass[0] not in (
+                        "Filter",
+                        "GlobalFilter",
+                    ):  # only load classes ending in "Filter"
+                        self.engines[engine_type] += [klass[1](self.rows, self.cols, orchestrator=self)]  # instanciate
+                        #if klass[0] == config["misc"]["default_filter"]:  # default filter
+                        #    self.current_filter = self.filters[-1]
+        
         # dynamically loads filters instances
+        
         available_filters = [
             module for module in sys.modules.keys() if module.startswith("filters.")
         ]
@@ -70,70 +98,42 @@ class Orchestrator:
         #    if fps < 30:
         #        print("WARNING:", f.__class__.__name__, "did not pass benchmark.", round(fps,2), "fps")
 
-        for t in self.filter_threads:
-            t.start()
-
     @property
     def current_filter_name(self):
         return self.current_filter.__class__.__name__
 
     @property
     def current_filter_index(self):
-        return self.available_filters.index(self.current_filter_name)
-
-    def compute_worker(self):
-        while 1:
-            try:
-                new_frame = self.input_frames.get()
-                #print(new_frame[0])
-                t1 = time.time()
-                self.output_frames.put(self.global_filter.compute(self.current_filter.compute(new_frame)))
-                self.performance_watcher.observe(time.time() - t1)
-                #time.sleep(1/30)
-            except queue.Empty:
-                print("empty")
-                time.sleep(1/30)
-            
+        return self.available_filters.index(self.current_filter_name)            
 
     def compute(self, frame, vid=None):
         t1 = time.time()
         #out = self.global_filter.compute(self.current_filter.compute(frame))
         out = self.current_filter.compute(frame)#, vid=vid)
+        return out
+        '''
+        out = self.engines["transformers"][0].compute(frame)
+        out = self.engines["generators"][1].compute(out)
+       
+
+        if self.previous_frame is not None:
+            out = cv.addWeighted(
+                self.previous_frame,
+                0.5,
+                out,
+                0.5,
+                0.0,
+            )
+
+        out = self.engines["wipers"][0].compute(out)
+
+        self.previous_frame = out
+        #out = self.engines["generators"][0].compute(frame)
         self.performance_watcher.observe(time.time() - t1)
         return out
+        '''
         #self.frame_id += 1
         #print(self.frame_id)
-        try:
-            self.input_frames.put(frame, block=False)
-            self.last_frame = self.output_frames.get(block=(self.last_frame is None))
-            return self.last_frame
-        except queue.Empty:
-            return self.last_frame
-        except queue.Full:
-            print("cleaning out input frames")
-            for i in range(self.input_frames.maxsize - 1):
-                self.input_frames.get()
-            return self.last_frame
-
-        try:
-            self.input_frames.put((next(self.unique), frame), block=False)
-            self.last_frame = self.output_frames.get(block=(self.last_frame is None))
-
-            if self.last_frame[0] < self.last_frame_id:
-                print("frames went out unordered")
-            
-            self.last_frame_id = self.last_frame[0]
-            return self.last_frame[1]
-        except queue.Empty:
-            #print("empty")
-            self.last_frame_id = self.last_frame[0]
-            return self.last_frame[1]
-        except queue.Full:
-            print("cleaning out input frames")
-            for i in range(self.input_frames.maxsize - 1):
-                self.input_frames.get()
-            self.last_frame_id = self.last_frame[0]
-            return self.last_frame[1]
 
         if config["misc"]["enable_global_filter"]:
             return self.current_filter.compute(self.global_filter.compute(frame))
@@ -172,6 +172,4 @@ class Orchestrator:
             fps = self.cap_performance_watcher.get_fps()
             self.send_ui_info(f"capfps:{fps}")
 
-            self.send_ui_info(f"outq:{self.output_frames.qsize()}")
-            self.send_ui_info(f"inq:{self.input_frames.qsize()}")
             time.sleep(1)

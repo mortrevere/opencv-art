@@ -25,6 +25,7 @@ class AllPassFilter(Filter):
         pass
 
     def compute(self, frame, vid=None):
+        return frame
         self.i += 1
         #print(self.o.next()*self.rows)
         #return frame#cv.resize(frame,(1080, 1920), interpolation = cv.INTER_CUBIC)

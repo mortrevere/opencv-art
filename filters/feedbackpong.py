@@ -20,7 +20,7 @@ class FeedbackPongFilter(Filter):
         self.max_size = 6
         self.last_switch = 0
 
-        self.max_size_dice = Dice(list(range(3,32)), p=1)
+        self.max_size_dice = Dice(list(range(16,32)), p=1)
         self.direction_dice = Dice([1, -1], p=1/2)
 
         self.rot_osc = Oscillator(freq=1, zero=True)
@@ -90,6 +90,9 @@ class FeedbackPongFilter(Filter):
             #f = self._blank.copy()
             self._previous = frame
             return frame
+
+        if random.random() > 0.97:
+            self.new_direction()
 
         frame = cv.addWeighted(frame,0.5,self._previous,0.5,0.0)
         self._previous = frame

@@ -25,7 +25,7 @@ class FeedbackColorsFilter(Filter):
 
         self.i = 0
 
-        self.mode = 2
+        self.mode = 0
         pass
 
     def compute(self, frame, vid=None):

@@ -55,13 +55,13 @@ class ContourFilter(Filter):
         if random.random() > 0.9:
             x1 = random.randint(0, self.cols)
             y1 = random.randint(0, self.cols)
-            #cv.circle(source, (x1, y1), 4, (255, 255, 255), -1)
+            cv.circle(source, (x1, y1), 4, (255, 255, 255), -1)
 
-        #cv.circle(source, (int(self.cols/2 + lfo*self.scale - self.scale/2), int(self.rows/2  + o*self.scale - self.scale/2)), 1, (255,255,255), -1)
+        cv.circle(source, (int(self.cols/2 + lfo*self.scale - self.scale/2), int(self.rows/2  + o*self.scale - self.scale/2)),3, (255,255,255), -1)
 
         acc = cv.addWeighted(
             self._previous,
-            0.995,
+            0.999,
             #cv.warpAffine(source, self.M, (self.cols, self.rows)),
             source,
             1,
@@ -72,7 +72,7 @@ class ContourFilter(Filter):
             self.direction = -1*self.direction
 
         image_center = tuple(np.array(frame.shape[1::-1]) / 2)
-        rot_mat = cv.getRotationMatrix2D(image_center, self.direction*0.1, 1.001)
+        rot_mat = cv.getRotationMatrix2D(image_center, 0.2, 1.001)
         acc = cv.warpAffine(acc, rot_mat, frame.shape[1::-1], flags=cv.INTER_LINEAR)
 
         #acc = cv.convertScaleAbs(acc, alpha=1.1, beta=0)
