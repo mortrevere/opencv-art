@@ -15,10 +15,10 @@ class RandomRectFilter(Filter):
 
         cv.rectangle(frame, (0, 0), (0, self.rows), (255, 255, 255), 1)
         cv.rectangle(frame, (self.cols-10, 0), (self.cols-10, self.rows), (255, 255, 255), 1)
-        return frame
+        #return frame
         lfo = 1
         o = 26
-        if random.random() > 0.9:
+        if random.random() > 0.4:
             x1 = random.randint(0, self.cols)
             y1 = random.randint(0, self.cols)
             cv.rectangle(frame, (x1, y1), (x1 + 20*random.randint(2,50), y1 + 20*random.randint(2,50)), (0, 255, 0), 1)

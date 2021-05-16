@@ -89,23 +89,32 @@ class MidiInputHandler:
                     self.buttons_by_id[addr].on()
 
                 action = controls.get(addr)
+                if action == "feedback_toggle":
+                    self.o.feedback = self.buttons_by_id.get(addr).state
                 if action == "next":
-                    self.o.next_filter()
+                    self.o.next_engine("generators")
                 if action == "previous":
-                    self.o.prev_filter()
-                if action == "tap":
-                    print(self._wallclock)
+                    self.o.prev_engine("generators")
+                if action == "wipeout":
+                    self.o.wipeout = True
+
+                if action == "generator_reset":
+                    self.o.generator_reset()
 
                 if midi_addr_to_filter_bind.get(
                     addr
                 ):  # button pressed is a filter control
                     binding = midi_addr_to_filter_bind[addr]
-                    parameter_name = self.o.current_filter.parameters_binding[binding]
-                    self.o.current_filter.set_parameter(
+                    parameter_name = self.o.current_ng("generators").parameters_binding[binding]
+                    self.o.current_ng("generators").set_parameter(
                         parameter_name, self.buttons_by_id[addr].state
                     )
                     return
             else:  # button OFF
+                action = controls.get(addr)
+                if action == "wipeout":
+                    self.o.wipeout = False
+
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
                     self.buttons_by_id[addr].released = True
                 if isinstance(self.buttons_by_id.get(addr), TriggerButton):
@@ -125,13 +134,18 @@ class MidiInputHandler:
                 and controls.get(addr) == "set"
             ):
                 self.o.global_filter.reset_all_parameters()  # reset all parameters (cycle + set)
+        action = controls.get(addr)
+        if action == "feedback_wet":
+            print(value)
+            self.o.feedback_wet = value
+            
 
         if midi_addr_to_filter_bind.get(addr) and not self.buttons_by_id.get(
             addr
         ):  # knob turned is a filter control
             binding = midi_addr_to_filter_bind[addr]
-            parameter_name = self.o.current_filter.parameters_binding[binding]
-            self.o.current_filter.set_parameter(parameter_name, value)
+            parameter_name = self.o.current_ng("generators").parameters_binding[binding]
+            self.o.current_ng("generators").set_parameter(parameter_name, value)
 
 
 class ToggleButton:

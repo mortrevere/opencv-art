@@ -34,8 +34,12 @@ class Orchestrator:
         self.last_frame_id = 0
         self.unique = count()
 
+        self.wipeout = False
+        self.feedback = False
+        self.feedback_wet = 0.5
+
         self.previous_frame = None
-        
+
         self.create_ui_threads()
 
         self.audio = AudioCapture()
@@ -43,6 +47,7 @@ class Orchestrator:
 
         self.engines = {"generators" : [], "wipers" : [], "transformers" : []}
         self.engines_order = ["generators", "transformers", "wipers"]
+        self.current_engine = {"generators" : 0, "wipers" : 0, "transformers" : 0}
 
         for engine_type in self.engines.keys():
 
@@ -63,11 +68,14 @@ class Orchestrator:
                         "GlobalFilter",
                     ):  # only load classes ending in "Filter"
                         self.engines[engine_type] += [klass[1](self.rows, self.cols, orchestrator=self)]  # instanciate
+
+                        if klass[0] in ("NoWiperFilter", "RectFilter", "NoTransformerFilter"):
+                            self.current_engine[engine_type] = len(self.engines[engine_type]) - 1
                         #if klass[0] == config["misc"]["default_filter"]:  # default filter
                         #    self.current_filter = self.filters[-1]
-        
+
         # dynamically loads filters instances
-        
+
         available_filters = [
             module for module in sys.modules.keys() if module.startswith("filters.")
         ]
@@ -102,36 +110,48 @@ class Orchestrator:
     def current_filter_name(self):
         return self.current_filter.__class__.__name__
 
+
+    def current_ng(self, engine_type):
+        return self.engines[engine_type][self.current_engine[engine_type]]
     @property
     def current_filter_index(self):
-        return self.available_filters.index(self.current_filter_name)            
+        return self.available_filters.index(self.current_filter_name)
 
     def compute(self, frame, vid=None):
         t1 = time.time()
         #out = self.global_filter.compute(self.current_filter.compute(frame))
-        out = self.current_filter.compute(frame)#, vid=vid)
-        return out
-        '''
-        out = self.engines["transformers"][0].compute(frame)
-        out = self.engines["generators"][1].compute(out)
-       
+        #out = self.current_filter.compute(frame)#, vid=vid)
+        #return out
 
-        if self.previous_frame is not None:
+        if self.wipeout:
+            out = self.engines["wipers"][self.current_engine["wipers"]]._blank.copy()
+            self.previous_frame = out
+            self.performance_watcher.observe(time.time() - t1)
+            return out
+
+        if not self.feedback:
+            frame = self.engines["wipers"][self.current_engine["wipers"]]._blank.copy()
+        out = self.engines["transformers"][self.current_engine["transformers"]].compute(frame)
+        out = self.engines["generators"][self.current_engine["generators"]].compute(out)
+
+    
+        if self.previous_frame is not None and self.feedback:
             out = cv.addWeighted(
                 self.previous_frame,
-                0.5,
+                1-self.feedback_wet,
                 out,
-                0.5,
+                self.feedback_wet,
                 0.0,
             )
+            
 
-        out = self.engines["wipers"][0].compute(out)
+        out = self.engines["wipers"][self.current_engine["wipers"]].compute(out)
 
         self.previous_frame = out
         #out = self.engines["generators"][0].compute(frame)
         self.performance_watcher.observe(time.time() - t1)
         return out
-        '''
+
         #self.frame_id += 1
         #print(self.frame_id)
 
@@ -140,6 +160,19 @@ class Orchestrator:
         else:
             return self.current_filter.compute(frame)
 
+    def generator_reset(self):
+        self.engines["generators"][self.current_engine["generators"]].reset()
+    def next_engine(self, engine_type):
+        self.current_engine[engine_type] = (self.current_engine[engine_type] + 1) % (len(self.engines[engine_type]))
+        #self.current_filter = self.filters[next_i]
+
+    def prev_engine(self, engine_type):
+        if self.current_engine[engine_type] != 0:
+            next_i = self.current_engine[engine_type] - 1
+        else:
+            next_i = len(self.engines[engine_type]) - 1
+
+        self.current_engine[engine_type] = next_i
 
     def next_filter(self):
         next_i = (self.current_filter_index + 1) % (len(self.available_filters))
@@ -171,5 +204,12 @@ class Orchestrator:
 
             fps = self.cap_performance_watcher.get_fps()
             self.send_ui_info(f"capfps:{fps}")
+
+            generator_name = self.engines["generators"][self.current_engine["generators"]].__class__.__name__
+            transformer_name = self.engines["transformers"][self.current_engine["transformers"]].__class__.__name__
+            wiper_name = self.engines["wipers"][self.current_engine["wipers"]].__class__.__name__
+            self.send_ui_info(f"engine:generator:{generator_name}")
+            self.send_ui_info(f"engine:transformer:{transformer_name}")
+            self.send_ui_info(f"engine:wiper:{wiper_name}")
 
             time.sleep(1)

@@ -40,8 +40,7 @@ while True:
             cv.imshow("frame", cv.resize(o.compute(stream.frame, vid=None), (WIDTH, HEIGHT)))
         else:
             o.compute(stream.frame)
-        if o.output_frames.qsize() == 0:
-            stream.fresh_frame = False # tag the current frame as processed
+
     except Exception as e:
         print(str(e))
         pass
@@ -51,9 +50,9 @@ while True:
     perfs2.observe(time.time() - t1)
 
     if i % 15 == 0:
-        print("OUT:", perfs2.get_fps())
-        print("PRC:", perfs.get_fps())
-        print(o.output_frames.qsize(), o.input_frames.qsize())
+        #print("OUT:", perfs2.get_fps())
+        #print("PRC:", perfs.get_fps())
+        pass
     i += 1
 
 cv.destroyAllWindows()
