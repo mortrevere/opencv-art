@@ -35,7 +35,7 @@ class Orchestrator:
         self.unique = count()
 
         self.wipeout = False
-        self.feedback = False
+        self.feedback = True
         self.feedback_wet = 0.5
 
         self.previous_frame = None
@@ -46,6 +46,7 @@ class Orchestrator:
         self.create_audio_threads()
 
         self.engines = {"generators" : [], "wipers" : [], "transformers" : []}
+        self.engines_on = {"generators" : True, "wipers" : True, "transformers" : True}
         self.engines_order = ["generators", "transformers", "wipers"]
         self.current_engine = {"generators" : 0, "wipers" : 0, "transformers" : 0}
 
@@ -69,7 +70,7 @@ class Orchestrator:
                     ):  # only load classes ending in "Filter"
                         self.engines[engine_type] += [klass[1](self.rows, self.cols, orchestrator=self)]  # instanciate
 
-                        if klass[0] in ("NoWiperFilter", "RectFilter", "NoTransformerFilter"):
+                        if klass[0] in ("NoWiperFilter", "SineDotFilter", "NoTransformerFilter"):
                             self.current_engine[engine_type] = len(self.engines[engine_type]) - 1
                         #if klass[0] == config["misc"]["default_filter"]:  # default filter
                         #    self.current_filter = self.filters[-1]
@@ -131,8 +132,12 @@ class Orchestrator:
 
         if not self.feedback:
             frame = self.engines["wipers"][self.current_engine["wipers"]]._blank.copy()
-        out = self.engines["transformers"][self.current_engine["transformers"]].compute(frame)
-        out = self.engines["generators"][self.current_engine["generators"]].compute(out)
+        
+        out = frame
+        if self.engines_on["transformers"]:
+            out = self.engines["transformers"][self.current_engine["transformers"]].compute(frame)
+        if self.engines_on["generators"]:
+            out = self.engines["generators"][self.current_engine["generators"]].compute(out)
 
     
         if self.previous_frame is not None and self.feedback:
@@ -144,9 +149,9 @@ class Orchestrator:
                 0.0,
             )
             
-
-        out = self.engines["wipers"][self.current_engine["wipers"]].compute(out)
-
+        if self.engines_on["wipers"]:
+            out = self.engines["wipers"][self.current_engine["wipers"]].compute(out)
+        out = self.global_filter.compute(out)
         self.previous_frame = out
         #out = self.engines["generators"][0].compute(frame)
         self.performance_watcher.observe(time.time() - t1)

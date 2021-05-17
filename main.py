@@ -50,8 +50,8 @@ while True:
     perfs2.observe(time.time() - t1)
 
     if i % 15 == 0:
-        #print("OUT:", perfs2.get_fps())
-        #print("PRC:", perfs.get_fps())
+        print("OUT:", perfs2.get_fps())
+        print("PRC:", perfs.get_fps())
         pass
     i += 1
 

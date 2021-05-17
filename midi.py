@@ -15,6 +15,9 @@ controls = {int(k): v for k, v in dict(config["midi.controls"]).items()}
 modifiers = {k: int(v) for k, v in dict(config["midi.modifiers"]).items()}
 toggle_buttons_list = list(range(32, 72))
 trigger_buttons_list = [int(value) for value in config.options("midi.trigger_buttons")]
+
+toggle_buttons_list_default_on = [39, 55, 71, 41]
+
 # trigger and toggle lists are exclusive
 for bt in trigger_buttons_list:
     print(bt)
@@ -49,8 +52,9 @@ class MidiController:
             button.on()
             time.sleep(0.02)
         for button in self.buttons:
-            button.off()
-            time.sleep(0.02)
+            if button.id not in toggle_buttons_list_default_on:
+                button.off()
+                time.sleep(0.02)
 
         # buttons will be accessed by MIDI id when handling MIDI input
         self.buttons_by_id = {}
@@ -97,6 +101,31 @@ class MidiInputHandler:
                     self.o.prev_engine("generators")
                 if action == "wipeout":
                     self.o.wipeout = True
+                
+                # handle last row on/off switches
+                if action == "generator_toggle":
+                    self.o.engines_on["generators"] = self.buttons_by_id[addr].state
+                if action == "transformer_toggle":
+                    self.o.engines_on["transformers"] = self.buttons_by_id[addr].state
+                if action == "wiper_toggle":
+                    self.o.engines_on["wipers"] = self.buttons_by_id[addr].state
+                # handle rows 6 and 7 next/prev engines
+                # prev
+                if action == "generator_prev":
+                    self.o.prev_engine("generators")
+                if action == "transformer_prev":
+                    self.o.prev_engine("transformers")
+                if action == "wiper_prev":
+                    self.o.prev_engine("wipers")
+                # next
+                if action == "generator_next":
+                    self.o.next_engine("generators")
+                if action == "transformer_next":
+                    self.o.next_engine("transformers")
+                if action == "wiper_next":
+                    self.o.next_engine("wipers")
+                    
+
 
                 if action == "generator_reset":
                     self.o.generator_reset()
@@ -144,8 +173,13 @@ class MidiInputHandler:
             addr
         ):  # knob turned is a filter control
             binding = midi_addr_to_filter_bind[addr]
-            parameter_name = self.o.current_ng("generators").parameters_binding[binding]
-            self.o.current_ng("generators").set_parameter(parameter_name, value)
+            # try to propagate parameter changes to all engines as there is no way
+            # to know which kind of engine is using which button/fader
+            # this can lead to parameters overlapping ... (as parameters bindings are defined per-engine)
+            for engine_type in ["generators", "transformers", "wipers"]:
+                parameter_name = self.o.current_ng(engine_type).parameters_binding.get(binding, None)
+                if parameter_name:
+                    self.o.current_ng(engine_type).set_parameter(parameter_name, value)
 
 
 class ToggleButton:

@@ -61,10 +61,10 @@ class ContourFilter(Filter):
 
         acc = cv.addWeighted(
             self._previous,
-            0.999,
+            0.9,
             #cv.warpAffine(source, self.M, (self.cols, self.rows)),
             source,
-            1,
+            0.9,
             0.0,
         )
 
@@ -72,7 +72,7 @@ class ContourFilter(Filter):
             self.direction = -1*self.direction
 
         image_center = tuple(np.array(frame.shape[1::-1]) / 2)
-        rot_mat = cv.getRotationMatrix2D(image_center, 0.2, 1.001)
+        rot_mat = cv.getRotationMatrix2D(image_center, 0.02, 1.001)
         acc = cv.warpAffine(acc, rot_mat, frame.shape[1::-1], flags=cv.INTER_LINEAR)
 
         #acc = cv.convertScaleAbs(acc, alpha=1.1, beta=0)
